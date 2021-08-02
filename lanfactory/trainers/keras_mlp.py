@@ -19,7 +19,8 @@ class DataGenerator(keras.utils.Sequence):
                  #labels, 
                  batch_size=32, 
                  shuffle=True, 
-                 label_prelog_cutoff = 1e-7 # label prelog cutoff --> label_preprocessor ?
+                 label_prelog_cutoff_low = 1e-7, # label prelog cutoff --> label_preprocessor ?
+                 label_prelog_cutoff_high = None,
                  ): 
         # Do I allow for arbitrary input file sizes ?
         
@@ -28,7 +29,8 @@ class DataGenerator(keras.utils.Sequence):
         #self.labels = labels
         self.file_IDs = file_IDs
         self.shuffle = shuffle
-        self.label_prelog_cutoff = label_prelog_cutoff
+        self.label_prelog_cutoff_low = label_prelog_cutoff_low
+        self.label_prelog_cutoff_high = label_prelog_cutoff_high
         self.training_data_folder = training_data_folder
         self.tmp_data = None
 
@@ -73,8 +75,11 @@ class DataGenerator(keras.utils.Sequence):
         X = self.tmp_data['data'][batch_ids, :] #tmp_file[batch_ids, :-1]
         y = self.tmp_data['labels'][batch_ids] #tmp_file[batch_ids, -1]
         
-        if self.prelog_cutoff_low is not None:
-            y[y < np.log(self.prelog_cutoff_low)] = np.log(self.prelog_cutoff_low)
+        if self.label_prelog_cutoff_low is not None:
+            y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
+        
+        if self.label_prelog_cutoff_high is not None:
+            y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
 
         return X, y
 
