@@ -112,6 +112,7 @@ class DataGenerator(keras.utils.Sequence):
             
 class KerasModel:
     def __init__(self, network_config = None, input_shape = 10, save_folder = None, allow_abs_path_folder_generation = True):
+        assert network_config is not None, 'You need to supply a network config dict'
         self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
@@ -123,12 +124,12 @@ class KerasModel:
         for i in range(len(self.network_config['layer_sizes']) + 1):
             if i == 0:
                 model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i],
-                                             input_dim = self.input_shape),
-                                             activation = self.network_config['activations'][i])
+                                             input_dim = self.input_shape,
+                                             activation = self.network_config['activations'][i]))
             else:
-                if network_config['layer_types'][i - 1] == 'dense':
-                    model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i - 1]),
-                                                 activation = self.network_config['activations'][i - 1])
+                if self.network_config['layer_types'][i - 1] == 'dense':
+                    model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i - 1],
+                                                 activation = self.network_config['activations'][i - 1]))
                 else: 
                     raise ValueError("Only Dense Layers for now --> check your network config")
         return model
