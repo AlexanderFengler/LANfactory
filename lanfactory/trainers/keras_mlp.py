@@ -94,7 +94,7 @@ class DataGenerator(keras.utils.Sequence):
 
     def __init_file_shape(self):
         init_file = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[0], 'rb'))
-        print('Init file shape': init_file['data'].shape, init_file['labels'].shape)
+        print('Init file shape: ', init_file['data'].shape, init_file['labels'].shape)
         return {'inputs': init_file['data'].shape, 
                 'labels': init_file['labels'].shape}
 
