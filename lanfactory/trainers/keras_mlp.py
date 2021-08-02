@@ -111,13 +111,12 @@ class DataGenerator(keras.utils.Sequence):
         #return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
 class KerasModel:
-    def __init__(self, network_config = None, input_shape = 10, save_folder = None, allow_abs_path_folder_generation = True):
+    def __init__(self, network_config = None, input_shape = 10, save_folder = None):
         assert network_config is not None, 'You need to supply a network config dict'
         self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
         self.model = self.__build_model()
-        try_gen_folder(folder = self.save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
 
     def __build_model(self):
         model = keras.Sequential()
@@ -134,9 +133,10 @@ class KerasModel:
                     raise ValueError("Only Dense Layers for now --> check your network config")
         return model
 
-    def _save_model_yaml(self):
+    def _save_model_yaml(self, allow_abs_path_folder_generation = False):
         spec = self.model.to_yaml()
         assert self.save_folder is not None, 'You did not supply a folder for saving the model'
+        try_gen_folder(folder = self.save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
         open(self.save_folder + "/model_spec.yaml", "w").write(spec)
 
 class ModelTrainerKerasSeq:
