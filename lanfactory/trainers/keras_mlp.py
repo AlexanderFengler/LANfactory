@@ -122,11 +122,11 @@ class KerasModel:
         model = keras.Sequential()
         for i in range(len(self.network_config['layer_sizes']) + 1):
             if i == 0:
-                model.add(keras.layers.Dense(units = self.network_config['hidden'][i],
+                model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i],
                                              input_dim = self.input_shape),
                                              activation = self.network_config['activations'][i])
             else:
-                if network_config['layer_types'][i] == 'dense':
+                if network_config['layer_types'][i - 1] == 'dense':
                     model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i - 1]),
                                                  activation = self.network_config['activations'][i - 1])
                 else: 
