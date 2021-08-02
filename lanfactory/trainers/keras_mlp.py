@@ -21,6 +21,8 @@ class DataGenerator(keras.utils.Sequence):
                  shuffle=True, 
                  label_prelog_cutoff = 1e-7 # label prelog cutoff --> label_preprocessor ?
                  ): 
+        # Do I allow for arbitrary input file sizes ?
+        
         'Initialization'
         self.batch_size = batch_size
         #self.labels = labels
@@ -87,7 +89,9 @@ class DataGenerator(keras.utils.Sequence):
 
     def __init_file_shape(self):
         print('Init file shape')
-        return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
+        init_file = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[0], 'rb'))
+        return init_file['data'].shape
+        #return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
 class KerasModel:
     def __init__(self, network_config = None, input_shape = 10, save_folder = None, allow_abs_path_folder_generation = True):
