@@ -34,20 +34,13 @@ class DataGenerator(keras.utils.Sequence):
 
         # Get metadata from loading a test file....
         # FILL IN
-        self.file_shape_dict = self.__init_file_shape()
-        self.batches_per_file = int(self.file_shape['inputs'][0] / batch_size)
-        self.input_dim = self.file_shape_dict['inputs'][1]
-        
-        if len(self.file_shape_dict['labels']) > 1:
-            self.label_dim = self.file_shape_dict['labels'][1]
-        else:
-            self.label_dim = 1
-
+        # self.file_shape_dict = 
+        self.__init_file_shape()
         self.on_epoch_end()
 
     def __len__(self):
         'Denotes the number of batches per epoch'
-        return int(np.floor((len(self.file_IDs) * self.file_shape[0]) / self.batch_size))
+        return int(np.floor((len(self.file_IDs) * self.file_shape_dict['data'][0]) / self.batch_size))
 
     def __getitem__(self, index):
         'Generate one batch of data'
@@ -95,8 +88,16 @@ class DataGenerator(keras.utils.Sequence):
     def __init_file_shape(self):
         init_file = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[0], 'rb'))
         print('Init file shape: ', init_file['data'].shape, init_file['labels'].shape)
-        return {'inputs': init_file['data'].shape, 
-                'labels': init_file['labels'].shape}
+        
+        self.file_shape_dict = {'inputs': init_file['data'].shape, 'labels': init_file['labels'].shape}
+        self.batches_per_file = int(self.file_shape_dict['inputs'][0] / self.batch_size)
+        self.input_dim = self.file_shape_dict['inputs'][1]
+        
+        if len(self.file_shape_dict['labels']) > 1:
+            self.label_dim = self.file_shape_dict['labels'][1]
+        else:
+            self.label_dim = 1
+        return 
 
         #return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
