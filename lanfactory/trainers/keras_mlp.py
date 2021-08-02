@@ -27,7 +27,7 @@ class DataGenerator(keras.utils.Sequence):
         self.file_IDs = file_IDs
         self.shuffle = shuffle
         self.label_prelog_cutoff = label_prelog_cutoff
-        self.train_data_folder = training_data_folder
+        self.training_data_folder = training_data_folder
 
         # Get metadata from loading a test file....
         # FILL IN
