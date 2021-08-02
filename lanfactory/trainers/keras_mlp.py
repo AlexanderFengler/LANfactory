@@ -10,7 +10,7 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 from tensorflow.python.client import device_lib
 import warnings
-from lanfactory.utils import try_gen_folders
+from lanfactory.utils import try_gen_folder
 
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
