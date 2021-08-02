@@ -120,21 +120,22 @@ class KerasModel:
 
     def __build_model(self):
         model = keras.Sequential()
-        for i in range(len(self.network_config['hidden_layers'])):
+        for i in range(len(self.network_config['layer_sizes']) + 1):
             if i == 0:
                 model.add(keras.layers.Dense(units = self.network_config['hidden'][i],
                                              input_dim = self.input_shape),
                                              activation = self.network_config['activations'][i])
             else:
                 if network_config['layer_types'][i] == 'dense':
-                    model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i]),
-                                                 activation = self.network_config['activations'][i])
+                    model.add(keras.layers.Dense(units = self.network_config['layer_sizes'][i - 1]),
+                                                 activation = self.network_config['activations'][i - 1])
                 else: 
                     raise ValueError("Only Dense Layers for now --> check your network config")
         return model
 
-    def __save_model_yaml(self):
+    def _save_model_yaml(self):
         spec = self.model.to_yaml()
+        assert self.save_folder is not None, 'You did not supply a folder for saving the model'
         open(self.save_folder + "/model_spec.yaml", "w").write(spec)
 
 class ModelTrainerKerasSeq:
