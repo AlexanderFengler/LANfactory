@@ -14,10 +14,16 @@ from lanfactory.utils import try_gen_folder
 
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, training_data_folder, file_IDs, labels, batch_size=32, dim=(10,), shuffle=True, label_prelog_cutoff = 1e-7):
+    def __init__(self, training_data_folder, 
+                 file_IDs, 
+                 #labels, 
+                 batch_size=32, 
+                 shuffle=True, 
+                 label_prelog_cutoff = 1e-7 # label prelog cutoff --> label_preprocessor ?
+                 ): 
         'Initialization'
         self.batch_size = batch_size
-        self.labels = labels
+        #self.labels = labels
         self.file_IDs = file_IDs
         self.shuffle = shuffle
         self.label_prelog_cutoff = label_prelog_cutoff
@@ -71,11 +77,11 @@ class DataGenerator(keras.utils.Sequence):
         return X, y
 
     def __load_file(self, file_index):
-        return np.random.shuffle(np.load(training_data_folder + '/' + self.file_IDs[file_index]))
+        return np.random.shuffle(np.load(self.training_data_folder + '/' + self.file_IDs[file_index]))
 
     def __init_file_shape(self):
         print('Init file shape')
-        return np.load(training_data_folder + '/' + self.file_IDs[0]).shape
+        return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
 
 class KerasModel:
