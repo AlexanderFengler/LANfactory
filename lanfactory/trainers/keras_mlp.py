@@ -28,6 +28,7 @@ class DataGenerator(keras.utils.Sequence):
         self.shuffle = shuffle
         self.label_prelog_cutoff = label_prelog_cutoff
         self.training_data_folder = training_data_folder
+        self.tmp_data = None
 
         # Get metadata from loading a test file....
         # FILL IN
@@ -47,12 +48,13 @@ class DataGenerator(keras.utils.Sequence):
 
         # Find list of IDs
         #file_IDs_temp = [self.file_IDs[k] for k in indexes]
-        if index % self.batches_per_file == 0 or self.tmp_file == None:
-            self.tmp_file = self.__load_file(self, file_index = self.indexes[index // self.batches_per_file])
+        if index % self.batches_per_file == 0 or self.tmp_data == None:
+            #self.tmp_file = 
+            self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
         # Generate data
         batch_ids = np.arange(((index % self.batches_per_file) * self.batch_size), ((index % self.batches_per_file) + 1) * self.batch_size, 1)
-        X, y = self.__data_generation(self, batch_ids)
+        X, y = self.__data_generation(batch_ids)
         return X, y
 
     def on_epoch_end(self):
@@ -68,8 +70,8 @@ class DataGenerator(keras.utils.Sequence):
         X = np.empty((self.batch_size, *self.input_dim), dtype = np.float32)
         y = np.empty((self.batch_size, self.label_dim), dtype = np.float32)
 
-        X = self.tmp_file[batch_ids, :-1]
-        y = self.tmp_file[batch_ids, -1]
+        X = self.tmp_data['data'][batch_ids, :] #tmp_file[batch_ids, :-1]
+        y = self.tmp_data['labels'][batch_ids] #tmp_file[batch_ids, -1]
         
         if self.prelog_cutoff_low is not None:
             y[y < np.log(self.prelog_cutoff_low)] = np.log(self.prelog_cutoff_low)
@@ -77,19 +79,23 @@ class DataGenerator(keras.utils.Sequence):
         return X, y
 
     def __load_file(self, file_index):
-        return np.random.shuffle(np.load(self.training_data_folder + '/' + self.file_IDs[file_index]))
+        self.tmp_data = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[file_index], 'rb'))
+        shuffle_idx = np.random.choice(self.tmp_data['data'].shape[0], size = self.tmp_data['data'].shape[0], replace = True)
+        self.tmp_data['data'] = self.tmp_data['data'][shuffle_idx, :]
+        self.tmp_data['labels'] = self.tmp_data['labels'][shuffle_idx]
+        #return np.random.shuffle(np.load(self.training_data_folder + '/' + self.file_IDs[file_index]))
 
     def __init_file_shape(self):
         print('Init file shape')
         return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
-
 class KerasModel:
     def __init__(self, network_config = None, input_shape = 10, save_folder = None, allow_abs_path_folder_generation = True):
+        self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
         self.model = self.__build_model()
-        try_gen_folder(folder = save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
+        try_gen_folder(folder = self.save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
 
     def __build_model(self):
         model = keras.Sequential()
@@ -107,8 +113,8 @@ class KerasModel:
         return model
 
     def __save_model_yaml(self):
-        spec = model.to_yaml()
-        open(save_folder + "/model_spec.yaml", "w").write(spec)
+        spec = self.model.to_yaml()
+        open(self.save_folder + "/model_spec.yaml", "w").write(spec)
 
 class ModelTrainerKerasSeq:
     def __init__(self,
