@@ -34,10 +34,15 @@ class DataGenerator(keras.utils.Sequence):
 
         # Get metadata from loading a test file....
         # FILL IN
-        self.file_shape = self.__init_file_shape()
-        self.batches_per_file = int(self.file_shape[0] / batch_size)
-        self.input_dim = self.file_shape[1] - 1
-        self.label_dim = 1
+        self.file_shape_dict = self.__init_file_shape()
+        self.batches_per_file = int(self.file_shape['inputs'][0] / batch_size)
+        self.input_dim = self.file_shape_dict['inputs'][1]
+        
+        if len(self.file_shape_dict['labels']) > 1:
+            self.label_dim = self.file_shape_dict['labels'][1]
+        else:
+            self.label_dim = 1
+
         self.on_epoch_end()
 
     def __len__(self):
@@ -88,9 +93,11 @@ class DataGenerator(keras.utils.Sequence):
         #return np.random.shuffle(np.load(self.training_data_folder + '/' + self.file_IDs[file_index]))
 
     def __init_file_shape(self):
-        print('Init file shape')
         init_file = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[0], 'rb'))
-        return init_file['data'].shape
+        print('Init file shape': init_file['data'].shape, init_file['labels'].shape)
+        return {'inputs': init_file['data'].shape, 
+                'labels': init_file['labels'].shape}
+
         #return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
 class KerasModel:
