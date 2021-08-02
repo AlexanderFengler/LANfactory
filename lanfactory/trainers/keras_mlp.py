@@ -120,7 +120,7 @@ class KerasModel:
 
     def __build_model(self):
         model = keras.Sequential()
-        for i in range(len(dnn_params['hidden_layers'])):
+        for i in range(len(self.network_config['hidden_layers'])):
             if i == 0:
                 model.add(keras.layers.Dense(units = self.network_config['hidden'][i],
                                              input_dim = self.input_shape),
