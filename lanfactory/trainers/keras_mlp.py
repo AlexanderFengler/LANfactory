@@ -52,6 +52,10 @@ class DataGenerator(keras.utils.Sequence):
         #file_IDs_temp = [self.file_IDs[k] for k in indexes]
         if index % self.batches_per_file == 0 or self.tmp_data == None:
             #self.tmp_file = 
+            print('debugging')
+            print('loading new datafile')
+            print('batch: ', index)
+            print('new file loaded:', index // self.batches_per_file)
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
         # Generate data
