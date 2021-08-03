@@ -56,7 +56,7 @@ def save_configs(model_id = None,
                  allow_abs_path_folder_generation = True):
     
     # Generate save_folder if it doesn't yet exist
-    try_gen_folder(folder = None, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
+    try_gen_folder(folder = save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
     
     # Save network config
     pickle.dump(network_config, open(save_folder + '/' + model_id + '_network_config.pickle'), 'w')
