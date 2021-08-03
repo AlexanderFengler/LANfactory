@@ -1,4 +1,5 @@
 import os
+import pickle
 
 def try_gen_folder(folder = None, allow_abs_path_folder_generation = True):
         folder_list = folder.split('/')
