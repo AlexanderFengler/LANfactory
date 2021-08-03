@@ -59,7 +59,7 @@ class DataGenerator(keras.utils.Sequence):
             #print('debugging')
             #print('loading new datafile')
             #print('batch: ', index)
-            print('new file loaded:', index // self.batches_per_file)
+            #print('new file loaded:', index // self.batches_per_file)
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
         # Generate data
