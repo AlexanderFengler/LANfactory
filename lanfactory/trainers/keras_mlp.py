@@ -12,7 +12,6 @@ from tensorflow.keras.models import load_model
 from tensorflow.python.client import device_lib
 import warnings
 from lanfactory.utils import try_gen_folder
-
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
     def __init__(self, training_data_folder, 
@@ -23,8 +22,11 @@ class DataGenerator(keras.utils.Sequence):
                  label_prelog_cutoff_low = 1e-7, # label prelog cutoff --> label_preprocessor ?
                  label_prelog_cutoff_high = None,
                  ): 
+        # List physical devices
+        tf.config.list_physical_devices()
+
         # Do I allow for arbitrary input file sizes ?
-        
+
         'Initialization'
         self.batch_size = batch_size
         #self.labels = labels
