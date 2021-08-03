@@ -12,11 +12,11 @@ from tensorflow.keras.models import load_model
 from tensorflow.python.client import device_lib
 import warnings
 from lanfactory.utils import try_gen_folder
+
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, training_data_folder, 
+    def __init__(self, 
                  file_IDs, 
-                 #labels, 
                  batch_size=32, 
                  shuffle=True, 
                  label_prelog_cutoff_low = 1e-7, # label prelog cutoff --> label_preprocessor ?
@@ -34,7 +34,7 @@ class DataGenerator(keras.utils.Sequence):
         self.shuffle = shuffle
         self.label_prelog_cutoff_low = label_prelog_cutoff_low
         self.label_prelog_cutoff_high = label_prelog_cutoff_high
-        self.training_data_folder = training_data_folder
+        #self.training_data_folder = training_data_folder
         self.tmp_data = None
 
         # Get metadata from loading a test file....
@@ -92,14 +92,14 @@ class DataGenerator(keras.utils.Sequence):
         return X, y
 
     def __load_file(self, file_index):
-        self.tmp_data = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[file_index], 'rb'))
+        self.tmp_data = pickle.load(open(self.file_IDs[file_index], 'rb'))
         shuffle_idx = np.random.choice(self.tmp_data['data'].shape[0], size = self.tmp_data['data'].shape[0], replace = True)
         self.tmp_data['data'] = self.tmp_data['data'][shuffle_idx, :]
         self.tmp_data['labels'] = self.tmp_data['labels'][shuffle_idx]
         #return np.random.shuffle(np.load(self.training_data_folder + '/' + self.file_IDs[file_index]))
 
     def __init_file_shape(self):
-        init_file = pickle.load(open(self.training_data_folder + '/' + self.file_IDs[0], 'rb'))
+        init_file = pickle.load(open(self.file_IDs[0], 'rb'))
         print('Init file shape: ', init_file['data'].shape, init_file['labels'].shape)
         
         self.file_shape_dict = {'inputs': init_file['data'].shape, 'labels': init_file['labels'].shape}
@@ -195,7 +195,7 @@ class ModelTrainerKerasSeq:
         self.cb_list = []
         for cb_tmp in self.train_config['callbacks']:
             if cb_tmp == 'checkpoint':
-                ckpt_file_name = self.output_folder + '/model_ckpt.h5'
+                ckpt_file_name = self.output_folder + '/' + self.model.model_id + '_ckpt.h5'
                 self.cb_list.append(keras.callbacks.ModelCheckpoint(ckpt_file_name,
                                                                 monitor = 'val_loss', 
                                                                 verbose = 1, 
