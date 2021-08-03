@@ -1,11 +1,11 @@
 import tensorflow as tf
 import keras 
 
-network_config_mlp = {'layer_types': [],
-                      'layer_sizes': [],
-                      'activations': [],
-                      'loss': [],
-                      'callbacks': []}
+network_config_mlp = {'layer_types': ['dense', 'dense', 'dense'],
+                      'layer_sizes': [100, 100, 1],
+                      'activations': ['tanh', 'tanh', 'linear'],
+                      'loss': ['huber'],
+                      'callbacks': ['checkpoint', 'earlystopping', 'reducelr']}
 
 train_config_mlp = {'batch_size': 128,
                     'n_epochs': 100,

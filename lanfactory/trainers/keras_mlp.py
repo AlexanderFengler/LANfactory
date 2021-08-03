@@ -1,4 +1,5 @@
 import numpy as np
+import uuid
 import os
 import pandas as pd
 import psutil
@@ -111,12 +112,14 @@ class DataGenerator(keras.utils.Sequence):
         #return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
 class KerasModel:
-    def __init__(self, network_config = None, input_shape = 10, save_folder = None):
+    def __init__(self, network_config = None, input_shape = 10, save_folder = None, generative_model_id = 'ddm'):
         assert network_config is not None, 'You need to supply a network config dict'
+        self.model_id = uuid.uuid1().hex + '_' + generative_model_id
         self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
         self.model = self.__build_model()
+        
 
     def __build_model(self):
         model = keras.Sequential()
@@ -137,7 +140,7 @@ class KerasModel:
         spec = self.model.to_yaml()
         assert self.save_folder is not None, 'You did not supply a folder for saving the model'
         try_gen_folder(folder = self.save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
-        open(self.save_folder + "/model_spec.yaml", "w").write(spec)
+        open(self.save_folder + "/" + self.model_id + "_model_spec.yaml", "w").write(spec)
 
 class ModelTrainerKerasSeq:
     def __init__(self,
@@ -164,7 +167,8 @@ class ModelTrainerKerasSeq:
         self.__get_callbacks()
         self.__compile_model()
         self.__load_weights()
-        try_gen_output_folder() # AF-TODO import folder
+        try_gen_folder(folder = self.output_folder, 
+                       allow_abs_path_folder_generation = allow_abs_path_folder_generation) # AF-TODO import folder
         
     def __get_loss(self):
         if self.train_config['loss'] == 'huber':
@@ -210,78 +214,77 @@ class ModelTrainerKerasSeq:
 
     def __compile_model(self):
         self.model.compile(loss = self.loss_fun,
-                        optimizer = self.optimizer,
-                        metrics = self.metrics)
+                           optimizer = self.optimizer,
+                           metrics = self.metrics)
     
     def __load_weights(self):
         # If warmstart == True, we load model weights and start training from there !
         return
     
-    def __try_gen_output_folder(self):
-        output_folder_list = self.output_folder.split('/')
-
-        # Check if folder string supplied defines a relative or absolute path
-        if not output_folder_list[0]:
-            if not self.allow_abs_path_folder_generation:
-                warnings.warn('Absolute folder path provided, but setting allow_abs_path_folder_generation = False. No folders will be generated.')
-                return
-            else: 
-                rel_folder = True
-                i = 1
-        else:
-            rel_folder = False
-            i = 0
-
-        #
-        while i < len(output_folder_list): 
-            if not output_folder_list[i]: 
-                output_folder_list.pop(i) 
-            else: 
-                i += 1
-
-        if rel_folder:
-            output_folder_list[1] = '/' + output_folder_list[1]
-            output_folder_list.pop(0)
-
-        tmp_dir_str = ''
-        i = 0
-
-        while i < len(output_folder_list):
-            if i == 0:
-                tmp_dir_str += output_folder_list[i]
-            else:
-                tmp_dir_str += '/' + output_folder_list[i]
-
-            if not os.path.exists(tmp_dir_str):
-                print('Did not find folder: ', tmp_dir_str)
-                print('Creating it...')
-                try:
-                    os.makedirs(tmp_dir_str)
-                except:
-                    print('Some problem occured when creating the directory ', tmp_dir_str)
-            else:
-                print('Found folder: ', tmp_dir_str)
-                print('Moving on...')
-            i += 1
-                   
-        return 
-
     def train_model(self, save_history = True):
-        history = model.fit(x = data_generator_train,
-                            validation_data = data_generator_val,
-                            epochs = self.train_config['n_epochs'],
-                            callbacks = self.cb_list, 
-                            verbose = 2,
-                            )
+        history = self.model.fit(x = self.data_generator_train,
+                                 validation_data = self.data_generator_val,
+                                 epochs = self.train_config['n_epochs'],
+                                 callbacks = self.cb_list, 
+                                 verbose = 2,
+                                 )
 
         if save_history:
-            pd.DataFrame(history.history).to_csv(output_folder + "/training_history.csv")
+            pd.DataFrame(history.history).to_csv(self.output_folder + "/" + self.model.model_id + "_training_history.csv")
 
-        if not 'checkpoint' in train_config['callbacks']:
+        if not 'checkpoint' in self.train_config['callbacks']:
             # Save Model
             print('Saving final state of the model, since callbacks did not include checkpoint creation')
-            model.save(output_folder + "/model_final.h5")
-
+            self.model.save(self.output_folder + "/" + self.model.model_id + "_model_final.h5")
 
     def _get_model(self):
         return self.model
+
+# def __try_gen_output_folder(self):
+#     output_folder_list = self.output_folder.split('/')
+
+#     # Check if folder string supplied defines a relative or absolute path
+#     if not output_folder_list[0]:
+#         if not self.allow_abs_path_folder_generation:
+#             warnings.warn('Absolute folder path provided, but setting allow_abs_path_folder_generation = False. No folders will be generated.')
+#             return
+#         else: 
+#             rel_folder = True
+#             i = 1
+#     else:
+#         rel_folder = False
+#         i = 0
+
+#     #
+#     while i < len(output_folder_list): 
+#         if not output_folder_list[i]: 
+#             output_folder_list.pop(i) 
+#         else: 
+#             i += 1
+
+#     if rel_folder:
+#         output_folder_list[1] = '/' + output_folder_list[1]
+#         output_folder_list.pop(0)
+
+#     tmp_dir_str = ''
+#     i = 0
+
+#     while i < len(output_folder_list):
+#         if i == 0:
+#             tmp_dir_str += output_folder_list[i]
+#         else:
+#             tmp_dir_str += '/' + output_folder_list[i]
+
+#         if not os.path.exists(tmp_dir_str):
+#             print('Did not find folder: ', tmp_dir_str)
+#             print('Creating it...')
+#             try:
+#                 os.makedirs(tmp_dir_str)
+#             except:
+#                 print('Some problem occured when creating the directory ', tmp_dir_str)
+#         else:
+#             print('Found folder: ', tmp_dir_str)
+#             print('Moving on...')
+#         i += 1
+                
+#     return 
