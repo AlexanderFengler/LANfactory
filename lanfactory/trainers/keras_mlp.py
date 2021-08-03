@@ -190,7 +190,7 @@ class ModelTrainerKerasSeq:
 
     def __get_callbacks(self):
         self.cb_list = []
-        for cb_tmp in train_config['callbacks']:
+        for cb_tmp in self.train_config['callbacks']:
             if cb_tmp == 'checkpoint':
                 ckpt_file_name = self.output_folder + '/model_ckpt.h5'
                 self.cb_list.append(keras.callbacks.ModelCheckpoint(ckpt_file_name,
