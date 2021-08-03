@@ -23,7 +23,7 @@ class DataGenerator(keras.utils.Sequence):
                  label_prelog_cutoff_high = None,
                  ): 
         # List physical devices
-        tf.config.list_physical_devices()
+        print(tf.config.list_physical_devices())
 
         # Do I allow for arbitrary input file sizes ?
 
@@ -53,11 +53,12 @@ class DataGenerator(keras.utils.Sequence):
 
         # Find list of IDs
         #file_IDs_temp = [self.file_IDs[k] for k in indexes]
+        print('batch: ', index)
         if index % self.batches_per_file == 0 or self.tmp_data == None:
             #self.tmp_file = 
+            print('index')
             print('debugging')
             print('loading new datafile')
-            print('batch: ', index)
             print('new file loaded:', index // self.batches_per_file)
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
