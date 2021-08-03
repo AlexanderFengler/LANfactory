@@ -61,9 +61,10 @@ def save_configs(model_id = None,
     
     # Save network config
     pickle.dump(network_config, open(save_folder + '/' + model_id + '_network_config.pickle', 'wb'))
-    
+    print('Saved network config')
     # Save train config
     pickle.dump(train_config, open(save_folder + '/' + model_id + '_train_config.pickle', 'wb'))
+    print('Saved train config')
     return
 
 # def label_preprocess_apply_prelog_cutoff():
