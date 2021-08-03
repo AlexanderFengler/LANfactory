@@ -55,10 +55,10 @@ class DataGenerator(keras.utils.Sequence):
         #file_IDs_temp = [self.file_IDs[k] for k in indexes]
         if index % self.batches_per_file == 0 or self.tmp_data == None:
             #self.tmp_file = 
-            print('index')
-            print('debugging')
-            print('loading new datafile')
-            print('batch: ', index)
+            #print('index')
+            #print('debugging')
+            #print('loading new datafile')
+            #print('batch: ', index)
             print('new file loaded:', index // self.batches_per_file)
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
@@ -224,12 +224,12 @@ class ModelTrainerKerasSeq:
         # If warmstart == True, we load model weights and start training from there !
         return
     
-    def train_model(self, save_history = True):
+    def train_model(self, save_history = True , verbose = 1):
         history = self.model.model.fit(x = self.data_generator_train,
                                        validation_data = self.data_generator_val,
                                        epochs = self.train_config['n_epochs'],
                                        callbacks = self.cb_list, 
-                                       verbose = 2,
+                                       verbose = verbose,
                                        )
 
         if save_history:
