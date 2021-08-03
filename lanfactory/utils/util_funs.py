@@ -60,10 +60,10 @@ def save_configs(model_id = None,
     try_gen_folder(folder = save_folder, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
     
     # Save network config
-    pickle.dump(network_config, open(save_folder + '/' + model_id + '_network_config.pickle'), 'w')
+    pickle.dump(network_config, open(save_folder + '/' + model_id + '_network_config.pickle', 'wb'))
     
     # Save train config
-    pickle.dump(train_config, open(save_folder + '/' + model_id + '_train_config.pickle'), 'w')
+    pickle.dump(train_config, open(save_folder + '/' + model_id + '_train_config.pickle', 'wb'))
     return
 
 # def label_preprocess_apply_prelog_cutoff():
