@@ -213,7 +213,7 @@ class ModelTrainerKerasSeq:
                 print('Provided a string for a callback function that is none of: checkpoint, earlystopping, reducelr')          
 
     def __compile_model(self):
-        self.model.compile(loss = self.loss_fun,
+        self.model.model.compile(loss = self.loss_fun,
                            optimizer = self.optimizer,
                            metrics = self.metrics)
     
@@ -222,12 +222,12 @@ class ModelTrainerKerasSeq:
         return
     
     def train_model(self, save_history = True):
-        history = self.model.fit(x = self.data_generator_train,
-                                 validation_data = self.data_generator_val,
-                                 epochs = self.train_config['n_epochs'],
-                                 callbacks = self.cb_list, 
-                                 verbose = 2,
-                                 )
+        history = self.model.model.fit(x = self.data_generator_train,
+                                       validation_data = self.data_generator_val,
+                                       epochs = self.train_config['n_epochs'],
+                                       callbacks = self.cb_list, 
+                                       verbose = 2,
+                                       )
 
         if save_history:
             pd.DataFrame(history.history).to_csv(self.output_folder + "/" + self.model.model_id + "_training_history.csv")
@@ -235,10 +235,10 @@ class ModelTrainerKerasSeq:
         if not 'checkpoint' in self.train_config['callbacks']:
             # Save Model
             print('Saving final state of the model, since callbacks did not include checkpoint creation')
-            self.model.save(self.output_folder + "/" + self.model.model_id + "_model_final.h5")
+            self.model.model.save(self.output_folder + "/" + self.model.model_id + "_model_final.h5")
 
     def _get_model(self):
-        return self.model
+        return self.model.model
 
 # def __try_gen_output_folder(self):
 #     output_folder_list = self.output_folder.split('/')
