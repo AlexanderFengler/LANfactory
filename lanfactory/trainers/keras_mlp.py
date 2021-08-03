@@ -23,7 +23,7 @@ class DataGenerator(keras.utils.Sequence):
                  label_prelog_cutoff_high = None,
                  ): 
         # List physical devices
-        print(tf.config.list_physical_devices())
+        #print(tf.config.list_physical_devices())
 
         # Do I allow for arbitrary input file sizes ?
 
@@ -100,7 +100,7 @@ class DataGenerator(keras.utils.Sequence):
 
     def __init_file_shape(self):
         init_file = pickle.load(open(self.file_IDs[0], 'rb'))
-        print('Init file shape: ', init_file['data'].shape, init_file['labels'].shape)
+        #print('Init file shape: ', init_file['data'].shape, init_file['labels'].shape)
         
         self.file_shape_dict = {'inputs': init_file['data'].shape, 'labels': init_file['labels'].shape}
         self.batches_per_file = int(self.file_shape_dict['inputs'][0] / self.batch_size)
@@ -111,7 +111,6 @@ class DataGenerator(keras.utils.Sequence):
         else:
             self.label_dim = 1
         return 
-
         #return np.load(self.training_data_folder + '/' + self.file_IDs[0]).shape
             
 class KerasModel:

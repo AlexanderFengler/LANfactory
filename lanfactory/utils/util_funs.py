@@ -48,3 +48,29 @@ def try_gen_folder(folder = None, allow_abs_path_folder_generation = True):
             i += 1
                    
         return 
+
+def save_configs(model_id = None,
+                 save_folder = None,
+                 network_config = None,
+                 train_config = None,
+                 allow_abs_path_folder_generation = True):
+    
+    # Generate save_folder if it doesn't yet exist
+    try_gen_folder(folder = None, allow_abs_path_folder_generation = allow_abs_path_folder_generation)
+    
+    # Save network config
+    pickle.dump(network_config, open(save_folder + '/' + model_id + '_network_config.pickle'), 'w')
+    
+    # Save train config
+    pickle.dump(train_config, open(save_folder + '/' + model_id + '_train_config.pickle'), 'w')
+    return
+
+# def label_preprocess_apply_prelog_cutoff():
+
+
+
+#         if self.label_prelog_cutoff_low is not None:
+#             y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
+        
+#         if self.label_prelog_cutoff_high is not None:
+#             y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
