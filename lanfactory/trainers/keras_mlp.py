@@ -203,7 +203,7 @@ class ModelTrainerKerasSeq:
                 self.cb_list.append(keras.callbacks.EarlyStopping(monitor = 'val_loss', 
                                                                 min_delta = 0, 
                                                                 verbose = 1, 
-                                                                patience = 2))
+                                                                patience = 3))
             elif cb_tmp == 'reducelr':
                 self.cb_list.append(keras.callbacks.ReduceLROnPlateau(monitor = 'val_loss', 
                                                                     factor = 0.1,

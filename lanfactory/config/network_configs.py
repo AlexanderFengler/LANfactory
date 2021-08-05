@@ -12,7 +12,7 @@ train_config_mlp = {'batch_size': 128,
                     'optimizer': 'adam',
                     'learning_rate': 0.002,
                     'loss': 'huber',
-                    'metrics': [tf.keras.metrics.MeanSquaredError(name = 'MSE'), tf.keras.losses.Huber(name = 'Huber')],
+                    'metrics': [tf.keras.losses.MeanSquaredError(name = 'MSE'), tf.keras.losses.Huber(name = 'Huber')],
                     'callbacks': ['checkpoint', 'earlystopping', 'reducelr']}
 
 
