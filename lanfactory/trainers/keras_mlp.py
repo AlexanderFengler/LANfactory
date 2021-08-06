@@ -196,28 +196,28 @@ class ModelTrainerKerasSeq:
             if cb_tmp == 'checkpoint':
                 ckpt_file_name = self.output_folder + '/' + self.model.model_id + '_ckpt.h5'
                 self.cb_list.append(keras.callbacks.ModelCheckpoint(ckpt_file_name,
-                                                                monitor = 'val_loss', 
-                                                                verbose = 1, 
-                                                                save_best_only = False))
+                                                                    monitor = 'val_loss', 
+                                                                    verbose = 1, 
+                                                                    save_best_only = False))
             elif cb_tmp == 'earlystopping':
                 self.cb_list.append(keras.callbacks.EarlyStopping(monitor = 'val_loss', 
-                                                                min_delta = 0, 
-                                                                verbose = 1, 
-                                                                patience = 3))
+                                                                  min_delta = 0, 
+                                                                  verbose = 1, 
+                                                                  patience = 10))
             elif cb_tmp == 'reducelr':
                 self.cb_list.append(keras.callbacks.ReduceLROnPlateau(monitor = 'val_loss', 
-                                                                    factor = 0.1,
-                                                                    patience = 1, 
-                                                                    verbose = 1,
-                                                                    min_delta = 0.0001,
-                                                                    min_lr = 0.0000001))
+                                                                      factor = 0.1,
+                                                                      patience = 5,
+                                                                      verbose = 1,
+                                                                      min_delta = 0.001,
+                                                                      min_lr = 0.00000001))
             else:
                 print('Provided a string for a callback function that is none of: checkpoint, earlystopping, reducelr')          
 
     def __compile_model(self):
         self.model.model.compile(loss = self.loss_fun,
-                           optimizer = self.optimizer,
-                           metrics = self.metrics)
+                                 optimizer = self.optimizer,
+                                 metrics = self.metrics)
     
     def __load_weights(self):
         # If warmstart == True, we load model weights and start training from there !
