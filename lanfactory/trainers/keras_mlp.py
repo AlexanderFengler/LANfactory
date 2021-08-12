@@ -209,7 +209,7 @@ class ModelTrainerKerasSeq:
                                                                       factor = 0.1,
                                                                       patience = 5,
                                                                       verbose = 1,
-                                                                      min_delta = 0.001,
+                                                                      min_delta = 0.0001,
                                                                       min_lr = 0.00000001))
             else:
                 print('Provided a string for a callback function that is none of: checkpoint, earlystopping, reducelr')          
