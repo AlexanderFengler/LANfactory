@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-class Dataset(torch.utils.data.Dataset):
+class DatasetTorch(torch.utils.data.Dataset):
     def __init__(self, 
                 file_IDs, 
                 batch_size = 32,
@@ -90,7 +90,6 @@ class Dataset(torch.utils.data.Dataset):
             y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
 
         return X, y
-
 
 class TorchMLP(nn.Module):
     def __init__(self, network_config = None, input_shape = 10, save_folder = None, generative_model_id = 'ddm'):
@@ -204,11 +203,14 @@ class ModelTrainerTorchMLP:
             
             self.training_history.values[epoch, :] = [epoch, valid_loss]
             
-        if save_model == True:
-            print('Saving model and training history')
+        if save_history == True:
+            print('Saving training history')
             pd.DataFrame(self.training_history).to_csv(self.output_folder + "/" + self.model.model_id + "_torch_training_history.csv")
+        if save_model == True:   
+            print('Saving model state dict')
             torch.save(self.model.state_dict(), self.output_folder + "/" + self.model.model_id + "_torch_state_dict.pt")
 
+        print('Training finished successfully...')
 class LoadTorchMLPInfer:
     def __init__(self, 
                  model_file_path = None,
