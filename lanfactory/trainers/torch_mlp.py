@@ -18,6 +18,7 @@ from time import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
 class DatasetTorch(torch.utils.data.Dataset):
     def __init__(self, 
