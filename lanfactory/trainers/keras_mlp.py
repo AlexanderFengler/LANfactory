@@ -27,7 +27,7 @@ class DataGenerator(keras.utils.Sequence):
 
         # Do I allow for arbitrary input file sizes ?
 
-        'Initialization'
+        # Initialization
         self.batch_size = batch_size
         #self.labels = labels
         self.file_IDs = file_IDs
