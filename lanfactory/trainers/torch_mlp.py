@@ -193,9 +193,9 @@ class ModelTrainerTorchMLP:
                 self.optimizer.zero_grad()
 
                 if (cnt % 100) == 0 and verbose == 1:
-                    print('epoch: {}, batch: {} of {}, batch_loss: {}'.format(epoch, cnt, self.data_loader_train.__len__(), loss))
+                    print('epoch: {} / {}, batch: {} / {}, batch_loss: {}'.format(epoch, self.train_config['n_epochs'], cnt, self.data_loader_train.__len__(), loss))
                 elif (cnt % 1000) == 0 and verbose == 2:
-                    print('epoch: {}, batch: {} of {}, batch_loss: {}'.format(epoch, cnt, self.data_loader_train.__len__(), loss))
+                    print('epoch: {} / {}, batch: {} / {}, batch_loss: {}'.format(epoch, self.train_config['n_epochs'], cnt, self.data_loader_train.__len__(), loss))
                 cnt += 1
 
             print('Epoch took {} seconds'.format(time() - epoch_s_t))
