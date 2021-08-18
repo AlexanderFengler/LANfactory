@@ -136,6 +136,7 @@ class ModelTrainerTorchMLP:
         
         torch.backends.cudnn.benchmark = True
         self.dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        print('Torch Device: ', self.dev)
         self.train_config = train_config
         self.model = model.to(self.dev)
         self.output_folder = output_folder
