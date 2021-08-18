@@ -6,10 +6,10 @@ import psutil
 import pickle
 #import kde_info
 #from lanfactory.config import 
-#import tensorflow as tf
-#from tensorflow import keras
-#from tensorflow.keras.models import load_model
-#from tensorflow.python.client import device_lib
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.models import load_model
+from tensorflow.python.client import device_lib
 import warnings
 from lanfactory.utils import try_gen_folder
 

@@ -1,5 +1,5 @@
-#import tensorflow as tf
-#import keras 
+import tensorflow as tf
+import keras 
 
 network_config_mlp = {'layer_types': ['dense', 'dense', 'dense'],
                       'layer_sizes': [100, 100, 1],
@@ -12,5 +12,5 @@ train_config_mlp = {'batch_size': 128,
                     'optimizer': 'adam',
                     'learning_rate': 0.002,
                     'loss': 'huber',
-                    'metrics': None, #'metrics': [tf.keras.losses.MeanSquaredError(name = 'MSE'), tf.keras.losses.Huber(name = 'Huber')],
+                    'metrics': [tf.keras.losses.MeanSquaredError(name = 'MSE'), tf.keras.losses.Huber(name = 'Huber')],
                     'callbacks': ['checkpoint', 'earlystopping', 'reducelr']}
