@@ -128,18 +128,18 @@ class ModelTrainerTorchMLP:
                  train_config = None,
                  data_loader_train = None,
                  data_loader_valid = None,
-                 torch_model = None,
+                 model = None,
                  output_folder = None,
                  warm_start = False,
-                 allow_abs_folder_generation = False,
+                 allow_abs_path_folder_generation = False,
                  pin_memory = True):
         
         torch.backends.cudnn.benchmark = True
         self.dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.train_config = train_config
-        self.model = torch_model.to(self.dev)
+        self.model = model.to(self.dev)
         self.output_folder = output_folder
-        self.allow_abs_folder_generation = allow_abs_folder_generation
+        self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
         self.data_loader_train = data_loader_train
         self.data_loader_valid = data_loader_valid
         self.warm_start = warm_start
@@ -148,6 +148,9 @@ class ModelTrainerTorchMLP:
         self.__get_loss()
         self.__get_optimizer()
         self.__load_weights()
+        try_gen_folder(folder = self.output_folder, 
+                       allow_abs_path_folder_generation = allow_abs_path_folder_generation) # AF-TODO import folder
+        
         
     def __get_loss(self):
         if self.train_config['loss'] == 'huber':
