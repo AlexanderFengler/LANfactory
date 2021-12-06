@@ -1,5 +1,5 @@
 import tensorflow as tf
-import keras 
+from tensorflow import keras 
 
 network_config_mlp = {'layer_types': ['dense', 'dense', 'dense'],
                       'layer_sizes': [100, 100, 1],
