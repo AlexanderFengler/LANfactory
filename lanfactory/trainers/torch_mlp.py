@@ -97,6 +97,7 @@ class TorchMLP(nn.Module):
         super(TorchMLP, self).__init__()
         if generative_model_id is not None:
             self.model_id = uuid.uuid1().hex + '_' + generative_model_id
+            self.generative_model_id = generative_model_id
         else:
             self.model_id = None
             
@@ -140,7 +141,7 @@ class ModelTrainerTorchMLP:
         print('Torch Device: ', self.dev)
         self.train_config = train_config
         self.model = model.to(self.dev)
-        self.output_folder = output_folder
+        self.output_folder = output_folder + '/' + self.model.generative_model_id + '/'
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
         self.data_loader_train = data_loader_train
         self.data_loader_valid = data_loader_valid
