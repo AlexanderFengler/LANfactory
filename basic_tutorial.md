@@ -149,7 +149,7 @@ print(train_config)
     {'batch_size': 128, 'n_epochs': 10, 'optimizer': 'adam', 'learning_rate': 0.002, 'loss': 'huber', 'save_history': True, 'metrics': [<keras.losses.MeanSquaredError object at 0x12c403d30>, <keras.losses.Huber object at 0x12c1c78e0>], 'callbacks': ['checkpoint', 'earlystopping', 'reducelr']}
 
 
-We can now load a network,
+We can now load a network, and save the configuration files for convenience.
 
 
 ```python
@@ -158,16 +158,7 @@ net = lanfactory.trainers.TorchMLP(network_config = deepcopy(network_config),
                                    input_shape = torch_training_dataset.input_dim,
                                    save_folder = '/data/torch_models/',
                                    generative_model_id = 'angle')
-```
 
-    tanh
-    linear
-
-
-and save the configuration files for convenience.
-
-
-```python
 # SAVE CONFIGS
 lanfactory.utils.save_configs(model_id = net.model_id + '_torch_',
                               save_folder = 'data/torch_models/angle/', 
@@ -176,21 +167,18 @@ lanfactory.utils.save_configs(model_id = net.model_id + '_torch_',
                               allow_abs_path_folder_generation = True)
 ```
 
-    Found folder:  data
-    Moving on...
-    Found folder:  data/torch_models
-    Moving on...
-    Found folder:  data/torch_models/angle
-    Moving on...
-    Saved network config
-    Saved train config
+    tanh
+    linear
 
 
 To finally train the network we supply our network, the dataloaders and training config to the `ModelTrainerTorchMLP` class, from `lanfactory.trainers`.
 
 
 ```python
-
+# TRAIN MODEL
+model_trainer.train_model(save_history = True,
+                          save_model = True,
+                          verbose = 0)
 ```
 
     Epoch took 0 / 10,  took 11.54538607597351 seconds
@@ -310,7 +298,7 @@ plt.ylabel('likelihod')
 
 
     
-![png](basic_tutorial_files/basic_tutorial_24_1.png)
+![png](basic_tutorial_files/basic_tutorial_22_1.png)
     
 
 
