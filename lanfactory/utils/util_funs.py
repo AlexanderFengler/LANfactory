@@ -66,13 +66,3 @@ def save_configs(model_id = None,
     pickle.dump(train_config, open(save_folder + '/' + model_id + '_train_config.pickle', 'wb'))
     print('Saved train config')
     return
-
-# def label_preprocess_apply_prelog_cutoff():
-
-
-
-#         if self.label_prelog_cutoff_low is not None:
-#             y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
-        
-#         if self.label_prelog_cutoff_high is not None:
-#             y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
