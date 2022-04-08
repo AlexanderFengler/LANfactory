@@ -1,7 +1,3 @@
-# LANfactory
-
-Lightweight python package to help with training [LANs](https://elifesciences.org/articles/65074) (Likelihood approximation networks). 
-
 ### Quick Start
 
 The `LANfactory` package is a light-weight convenience package for training `likelihood approximation networks` (LANs) in torch (or keras), 
@@ -321,4 +317,3 @@ plt.ylabel('likelihod')
 We hope this package may be helpful in case you attempt to train [LANs](https://elifesciences.org/articles/65074) for your own research.
 
 #### END
-

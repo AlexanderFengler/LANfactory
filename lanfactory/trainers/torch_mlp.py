@@ -168,7 +168,7 @@ class ModelTrainerTorchMLP:
             self.model.train()
             cnt = 0
             epoch_s_t = time()
-            #with tqdm.tqdm(self.data_loader_train , unit = 'batch') as tepoch:
+            # Training loop
             for xb, yb in self.data_loader_train:
                 #tepoch.set_description('Epoch {}'.format(epoch))
                 if self.pin_memory and self.dev.__str__() == 'cuda':
@@ -189,10 +189,10 @@ class ModelTrainerTorchMLP:
                     print('epoch: {} / {}, batch: {} / {}, batch_loss: {}'.format(epoch, self.train_config['n_epochs'], cnt, self.data_loader_train.__len__(), loss))
                 cnt += 1
 
-            print('Epoch took {} seconds'.format(time() - epoch_s_t))
-            print('STARTING VALIDATION:')
-            self.model.eval()
+            print('Epoch took {} / {},  took {} seconds'.format(epoch, self.train_config['n_epochs'], time() - epoch_s_t))
             
+            # Start validation
+            self.model.eval()
             with torch.no_grad():
                 valid_loss = sum(self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev)) for xb, yb in self.data_loader_valid) / self.data_loader_valid.__len__()
             print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], valid_loss))
@@ -225,7 +225,11 @@ class LoadTorchMLPInfer:
         self.net.load_state_dict(torch.load(self.model_file_path))
         self.net.to(self.dev)
         self.net.eval()
-    
+
+    @torch.no_grad()
+    def __call__(self, x):
+        return self.net(x)
+
     @torch.no_grad()
     def predict_on_batch(self, x = None):
         return self.net(torch.from_numpy(x).to(self.dev)).cpu().numpy()
