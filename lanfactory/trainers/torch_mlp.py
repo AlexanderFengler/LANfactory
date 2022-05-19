@@ -197,7 +197,7 @@ class ModelTrainerTorchMLP:
                 valid_loss = sum(self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev)) for xb, yb in self.data_loader_valid) / self.data_loader_valid.__len__()
             print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], valid_loss))
             
-            self.training_history.values[epoch, :] = [epoch, valid_loss]
+            self.training_history.values[epoch, :] = [epoch, valid_loss.cpu()]
             
         if save_history == True:
             print('Saving training history')
@@ -226,6 +226,7 @@ class LoadTorchMLPInfer:
         self.net.to(self.dev)
         self.net.eval()
 
+    # AF-TODO: Seemingly LoadTorchMLPInfer is still not callable !
     @torch.no_grad()
     def __call__(self, x):
         return self.net(x)
