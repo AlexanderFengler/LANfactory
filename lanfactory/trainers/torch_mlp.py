@@ -17,7 +17,7 @@ class DatasetTorch(torch.utils.data.Dataset):
                  batch_size = 32,
                  label_prelog_cutoff_low = 1e-7,
                  label_prelog_cutoff_high = None,
-                 data_key = 'data',
+                 features_key = 'data',
                  label_key = 'labels',
                  ):
 
@@ -29,7 +29,7 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.label_prelog_cutoff_low = label_prelog_cutoff_low
         self.label_prelog_cutoff_high = label_prelog_cutoff_high
         self.tmp_data = None
-        self.data_key = data_key
+        self.features_key = features_key
         self.label_key = label_key
 
         # get metadata from loading a test file
@@ -37,7 +37,8 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __len__(self):
         # Number of batches per epoch
-        return int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
+        tmp_len = int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
+        return tmp_len #int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
 
     def __getitem__(self, index):
         # Generate indexes of the batch
@@ -54,15 +55,17 @@ class DatasetTorch(torch.utils.data.Dataset):
     def __load_file(self, file_index):
         # Load file and shuffle the indices
         self.tmp_data = pickle.load(open(self.file_IDs[file_index], 'rb'))
-        shuffle_idx = np.random.choice(self.tmp_data[self.data_key].shape[0], size = self.tmp_data[self.data_key].shape[0], replace = True)
-        self.tmp_data[self.data_key] = self.tmp_data[self.data_key][shuffle_idx, :]
+        shuffle_idx = np.random.choice(self.tmp_data[self.features_key].shape[0], 
+                                        size = self.tmp_data[self.features_key].shape[0],
+                                         replace = True)
+        self.tmp_data[self.features_key] = self.tmp_data[self.features_key][shuffle_idx, :]
         self.tmp_data[self.label_key] = self.tmp_data[self.label_key][shuffle_idx]
         return
 
     def __init_file_shape(self):
         # Function gets dimensionalities form a test data file
         init_file = pickle.load(open(self.file_IDs[0], 'rb'))
-        self.file_shape_dict = {'inputs': init_file[self.data_key].shape, 'labels': init_file[self.label_key].shape}
+        self.file_shape_dict = {'inputs': init_file[self.features_key].shape, 'labels': init_file[self.label_key].shape}
         self.batches_per_file = int(self.file_shape_dict['inputs'][0] / self.batch_size)
         self.input_dim = self.file_shape_dict['inputs'][1]
         
@@ -74,7 +77,7 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __data_generation(self, batch_ids = None):
         # Generates data containing batch_size samples 
-        X = torch.tensor(self.tmp_data[self.data_key][batch_ids, :])
+        X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
         y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]),1)
         
         if self.label_prelog_cutoff_low is not None:
