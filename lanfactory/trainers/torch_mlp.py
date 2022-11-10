@@ -13,14 +13,15 @@ import torch.nn.functional as F
 
 class DatasetTorch(torch.utils.data.Dataset):
     def __init__(self, 
-                file_IDs, 
-                batch_size = 32,
-                label_prelog_cutoff_low = 1e-7,
-                label_prelog_cutoff_high = None,
-                data_key = 'data',
-                label_key = 'labels',
-                ):
+                 file_IDs, 
+                 batch_size = 32,
+                 label_prelog_cutoff_low = 1e-7,
+                 label_prelog_cutoff_high = None,
+                 data_key = 'data',
+                 label_key = 'labels',
+                 ):
 
+        # AF-TODO: Take device into account at this level, this currently happens only in the training loop
         # Initialization
         self.batch_size = batch_size
         self.file_IDs = file_IDs
@@ -35,7 +36,7 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.__init_file_shape()
 
     def __len__(self):
-        'Denotes the number of batches per epoch'
+        # Number of batches per epoch
         return int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
 
     def __getitem__(self, index):
@@ -85,7 +86,12 @@ class DatasetTorch(torch.utils.data.Dataset):
         return X, y
 
 class TorchMLP(nn.Module):
-    def __init__(self, network_config = None, input_shape = 10, save_folder = None, generative_model_id = 'ddm'):
+    def __init__(self, 
+                 network_config = None, 
+                 input_shape = 10,
+                 save_folder = None, 
+                 generative_model_id = 'ddm'):
+
         super(TorchMLP, self).__init__()
         if generative_model_id is not None:
             self.model_id = uuid.uuid1().hex + '_' + generative_model_id
@@ -98,7 +104,7 @@ class TorchMLP(nn.Module):
         self.network_config = network_config
         self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh(), 'sigmoid': torch.nn.Sigmoid()}
 
-        # Build the network
+        # Build the network ------
         self.layers = nn.ModuleList()
         
         self.layers.append(nn.Linear(input_shape, self.network_config['layer_sizes'][0]))
@@ -120,6 +126,7 @@ class TorchMLP(nn.Module):
                 pass
 
         self.len_layers = len(self.layers)
+        # -----------------------
 
     # Define forward pass
     def forward(self, x):
@@ -137,7 +144,8 @@ class ModelTrainerTorchMLP:
                  warm_start = False,
                  allow_abs_path_folder_generation = False,
                  pin_memory = True):
-        
+
+        # Class to train MLP models (This is in fact not MLP specific --> rename?)
         torch.backends.cudnn.benchmark = True
         self.dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         print('Torch Device: ', self.dev)
@@ -149,7 +157,7 @@ class ModelTrainerTorchMLP:
         self.data_loader_valid = data_loader_valid
         self.warm_start = warm_start
         self.pin_memory = pin_memory
-        
+
         self.__get_loss()
         self.__get_optimizer()
         self.__load_weights()
@@ -171,6 +179,7 @@ class ModelTrainerTorchMLP:
             self.optimizer = optim.SGD(self.model.parameters(), weight_decay = self.train_config['weight_decay'])
             
     def __load_weights(self):
+        raise NotImplementedError
         # for warmstart, not implemented at the moment
         return
     
@@ -183,7 +192,7 @@ class ModelTrainerTorchMLP:
             epoch_s_t = time()
             # Training loop
             for xb, yb in self.data_loader_train:
-                #tepoch.set_description('Epoch {}'.format(epoch))
+                # Shift data to device
                 if self.pin_memory and self.dev.__str__() == 'cuda':
                     xb, yb = xb.cuda(non_blocking = True), yb.cuda(non_blocking = True)
                 else:
