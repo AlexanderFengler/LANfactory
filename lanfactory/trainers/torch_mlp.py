@@ -44,7 +44,6 @@ class DatasetTorch(torch.utils.data.Dataset):
 
         # Check if it is time to load the next file
         if index % self.batches_per_file == 0 or self.tmp_data == None:
-            print('index: ', index)
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
         # Generate and return a batch
