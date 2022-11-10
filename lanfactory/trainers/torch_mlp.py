@@ -37,15 +37,14 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __len__(self):
         # Number of batches per epoch
-        tmp_len = int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
-        return tmp_len #int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
+        return int(np.floor((len(self.file_IDs) * ((self.file_shape_dict['inputs'][0] // self.batch_size) * self.batch_size)) / self.batch_size))
 
     def __getitem__(self, index):
         # Generate indexes of the batch
 
         # Check if it is time to load the next file
         if index % self.batches_per_file == 0 or self.tmp_data == None:
-            print(index)
+            print('index: ', index)
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
         # Generate and return a batch
