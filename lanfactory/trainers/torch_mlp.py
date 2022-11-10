@@ -179,7 +179,7 @@ class ModelTrainerTorchMLP:
             self.optimizer = optim.SGD(self.model.parameters(), weight_decay = self.train_config['weight_decay'])
             
     def __load_weights(self):
-        raise NotImplementedError
+        #raise NotImplementedError
         # for warmstart, not implemented at the moment
         return
     
