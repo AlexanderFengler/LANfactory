@@ -122,7 +122,10 @@ class TorchMLP(nn.Module):
             elif len(self.network_config['activations']) >= len(self.network_config['layer_sizes']) - 1:
                 # apply output activation if supplied
                 # e.g. classification network
-                self.layers.append(self.activations[self.network_config['activations'][i + 1]])
+                if self.network_config['activations'][i + 1] != 'linear':
+                    self.layers.append(self.activations[self.network_config['activations'][i + 1]])
+                else:
+                    pass
             else:
                 # skip output activation if no activation for last layer is provided
                 # e.g. regression network
