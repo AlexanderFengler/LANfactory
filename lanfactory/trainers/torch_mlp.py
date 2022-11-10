@@ -16,7 +16,9 @@ class DatasetTorch(torch.utils.data.Dataset):
                 file_IDs, 
                 batch_size = 32,
                 label_prelog_cutoff_low = 1e-7,
-                label_prelog_cutoff_high = None
+                label_prelog_cutoff_high = None,
+                data_key = 'data',
+                label_key = 'labels',
                 ):
 
         # Initialization
@@ -26,9 +28,10 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.label_prelog_cutoff_low = label_prelog_cutoff_low
         self.label_prelog_cutoff_high = label_prelog_cutoff_high
         self.tmp_data = None
+        self.data_key = data_key
+        self.label_key = label_key
 
         # get metadata from loading a test file
-
         self.__init_file_shape()
 
     def __len__(self):
@@ -36,31 +39,29 @@ class DatasetTorch(torch.utils.data.Dataset):
         return int(np.floor((len(self.file_IDs) * self.file_shape_dict['inputs'][0]) / self.batch_size))
 
     def __getitem__(self, index):
-        'Generate one batch of data'
         # Generate indexes of the batch
 
-        # Find list of IDs
+        # Check if it is time to load the next file
         if index % self.batches_per_file == 0 or self.tmp_data == None:
             self.__load_file(file_index = self.indexes[index // self.batches_per_file])
 
-        # Generate data
+        # Generate and return a batch
         batch_ids = np.arange(((index % self.batches_per_file) * self.batch_size), ((index % self.batches_per_file) + 1) * self.batch_size, 1)
         X, y = self.__data_generation(batch_ids)
         return X, y
 
     def __load_file(self, file_index):
+        # Load file and shuffle the indices
         self.tmp_data = pickle.load(open(self.file_IDs[file_index], 'rb'))
-        shuffle_idx = np.random.choice(self.tmp_data['data'].shape[0], size = self.tmp_data['data'].shape[0], replace = True)
-        self.tmp_data['data'] = self.tmp_data['data'][shuffle_idx, :]
-        self.tmp_data['labels'] = self.tmp_data['labels'][shuffle_idx]
+        shuffle_idx = np.random.choice(self.tmp_data[self.data_key].shape[0], size = self.tmp_data[self.data_key].shape[0], replace = True)
+        self.tmp_data[self.data_key] = self.tmp_data[self.data_key][shuffle_idx, :]
+        self.tmp_data[self.label_key] = self.tmp_data[self.label_key][shuffle_idx]
         return
-        #return np.random.shuffle(np.load(self.training_data_folder + '/' + self.file_IDs[file_index]))
 
     def __init_file_shape(self):
+        # Function gets dimensionalities form a test data file
         init_file = pickle.load(open(self.file_IDs[0], 'rb'))
-        #print('Init file shape: ', init_file['data'].shape, init_file['labels'].shape)
-        
-        self.file_shape_dict = {'inputs': init_file['data'].shape, 'labels': init_file['labels'].shape}
+        self.file_shape_dict = {'inputs': init_file[self.data_key].shape, 'labels': init_file[self.label_key].shape}
         self.batches_per_file = int(self.file_shape_dict['inputs'][0] / self.batch_size)
         self.input_dim = self.file_shape_dict['inputs'][1]
         
@@ -71,9 +72,9 @@ class DatasetTorch(torch.utils.data.Dataset):
         return
 
     def __data_generation(self, batch_ids = None):
-        'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
-        X = torch.tensor(self.tmp_data['data'][batch_ids, :]) #tmp_file[batch_ids, :-1]
-        y = torch.unsqueeze(torch.tensor(self.tmp_data['labels'][batch_ids]),1) #tmp_file[batch_ids, -1]
+        # Generates data containing batch_size samples 
+        X = torch.tensor(self.tmp_data[self.data_key][batch_ids, :])
+        y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]),1)
         
         if self.label_prelog_cutoff_low is not None:
             y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
@@ -95,26 +96,36 @@ class TorchMLP(nn.Module):
         self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
-        self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh()}
+        self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh(), 'sigmoid': torch.nn.Sigmoid()}
+
+        # Build the network
         self.layers = nn.ModuleList()
         
         self.layers.append(nn.Linear(input_shape, self.network_config['layer_sizes'][0]))
         self.layers.append(self.activations[self.network_config['activations'][0]])
+        print(self.network_config['activations'][0])
         for i in range(len(self.network_config['layer_sizes']) - 1):
             self.layers.append(nn.Linear(self.network_config['layer_sizes'][i], self.network_config['layer_sizes'][i + 1]))
             print(self.network_config['activations'][i + 1])
             if i < (len(self.network_config['layer_sizes']) - 2):
+                # activations until last hidden layer are always applied
+                self.layers.append(self.activations[self.network_config['activations'][i + 1]])
+            elif len(self.network_config['activations']) >= len(self.network_config['layer_sizes']) - 1:
+                # apply output activation if supplied
+                # e.g. classification network
                 self.layers.append(self.activations[self.network_config['activations'][i + 1]])
             else:
-                # skip last activation since
+                # skip output activation if no activation for last layer is provided
+                # e.g. regression network
                 pass
+
         self.len_layers = len(self.layers)
 
+    # Define forward pass
     def forward(self, x):
         for i in range(self.len_layers - 1):
             x = self.layers[i](x)
         return self.layers[-1](x)
-
 
 class ModelTrainerTorchMLP:
     def __init__(self, 
@@ -148,14 +159,16 @@ class ModelTrainerTorchMLP:
     def __get_loss(self):
         if self.train_config['loss'] == 'huber':
             self.loss_fun = F.huber_loss
-        elif self.train_config['mse'] == 'mse':
+        elif self.train_config['loss'] == 'mse':
             self.loss_fun = F.mse_loss
+        elif self.train_config['loss'] == 'bce':
+            self.loss_fun = F.binary_cross_entropy
             
     def __get_optimizer(self):
         if self.train_config['optimizer'] == 'adam':
-            self.optimizer = optim.Adam(self.model.parameters())        
+            self.optimizer = optim.Adam(self.model.parameters(), weight_decay = self.train_config['weight_decay'])  
         elif self.train_config['optimizer'] == 'sgd':
-            self.optimizer = optim.SGD(self.model.parameters())
+            self.optimizer = optim.SGD(self.model.parameters(), weight_decay = self.train_config['weight_decay'])
             
     def __load_weights(self):
         # for warmstart, not implemented at the moment
@@ -225,6 +238,33 @@ class LoadTorchMLPInfer:
         self.net.load_state_dict(torch.load(self.model_file_path))
         self.net.to(self.dev)
         self.net.eval()
+
+    # AF-TODO: Seemingly LoadTorchMLPInfer is still not callable !
+    @torch.no_grad()
+    def __call__(self, x):
+        return self.net(x)
+
+    @torch.no_grad()
+    def predict_on_batch(self, x = None):
+        return self.net(torch.from_numpy(x).to(self.dev)).cpu().numpy()
+
+class LoadTorchMLP:
+    def __init__(self, 
+                 model_file_path = None,
+                 network_config = None,
+                 input_dim = None):
+        
+        ##torch.backends.cudnn.benchmark = True
+        self.dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.model_file_path = model_file_path
+        self.network_config = network_config
+        self.input_dim = input_dim
+        
+        self.net = TorchMLP(network_config = self.network_config,
+                            input_shape = self.input_dim,
+                            generative_model_id = None)
+        self.net.load_state_dict(torch.load(self.model_file_path))
+        self.net.to(self.dev)
 
     # AF-TODO: Seemingly LoadTorchMLPInfer is still not callable !
     @torch.no_grad()
