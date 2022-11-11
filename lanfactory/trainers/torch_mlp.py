@@ -174,6 +174,8 @@ class ModelTrainerTorchMLP:
             self.loss_fun = F.mse_loss
         elif self.train_config['loss'] == 'bce':
             self.loss_fun = F.binary_cross_entropy
+        elif self.train_config['loss'] == 'bcelogit':
+            self.loss_fun = F.binary_cross_entropy_with_logits
             
     def __get_optimizer(self):
         if self.train_config['optimizer'] == 'adam':
