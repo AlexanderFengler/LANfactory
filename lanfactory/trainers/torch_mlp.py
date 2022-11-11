@@ -17,6 +17,8 @@ class DatasetTorch(torch.utils.data.Dataset):
                  batch_size = 32,
                  label_prelog_cutoff_low = 1e-7,
                  label_prelog_cutoff_high = None,
+                 label_simple_lower_bound = None,
+                 label_simple_upper_bound = None,
                  features_key = 'data',
                  label_key = 'labels',
                  ):
@@ -28,6 +30,8 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.indexes = np.arange(len(self.file_IDs))
         self.label_prelog_cutoff_low = label_prelog_cutoff_low
         self.label_prelog_cutoff_high = label_prelog_cutoff_high
+        self.label_simple_upper_bound = label_simple_upper_bound
+        self.label_simple_lower_bound = label_simple_lower_bound
         self.tmp_data = None
         self.features_key = features_key
         self.label_key = label_key
@@ -83,6 +87,12 @@ class DatasetTorch(torch.utils.data.Dataset):
         if self.label_prelog_cutoff_high is not None:
             y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
 
+        if self.label_simple_lower_bound is not None:
+            y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
+
+        if self.label_simple_upper_bound is not None:
+            y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
+
         return X, y
 
 class TorchMLP(nn.Module):
@@ -90,7 +100,9 @@ class TorchMLP(nn.Module):
                  network_config = None, 
                  input_shape = 10,
                  save_folder = None, 
-                 generative_model_id = 'ddm'):
+                 generative_model_id = 'ddm',
+                 network_type = 'regressor', # 'classifier', 'regressor'
+                 ):
 
         super(TorchMLP, self).__init__()
         if generative_model_id is not None:
@@ -102,6 +114,7 @@ class TorchMLP(nn.Module):
         self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
+        self.network_type = network_type
         self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh(), 'sigmoid': torch.nn.Sigmoid()}
 
         # Build the network ------
@@ -135,8 +148,15 @@ class TorchMLP(nn.Module):
     def forward(self, x):
         for i in range(self.len_layers - 1):
             x = self.layers[i](x)
-        return self.layers[-1](x)
-
+        if self.train or self.network_type == 'regressor':
+            return self.layers[-1](x)
+        elif self.network_type == 'logit_classifier':
+            return - torch.log((1 + torch.exp(- self.layers[-1](x))))  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
+        elif self.network_type == 'classifier':
+            return torch.log(self.layers[-1](x))
+        else:
+            return self.layers[-1](x)
+            
 class ModelTrainerTorchMLP:
     def __init__(self, 
                  train_config = None,
