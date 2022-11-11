@@ -149,18 +149,14 @@ class TorchMLP(nn.Module):
         for i in range(self.len_layers - 1):
             x = self.layers[i](x)
         if self.training or self.train_output_type == 'logprob':
-            print('passing train version')
             return self.layers[-1](x)
         elif self.train_output_type == 'logits':
-            print('passing eval version')
             return - torch.log((1 + torch.exp(- self.layers[-1](x))))  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
         elif self.train_output_type == 'prob':
-            print('passing eval version')
             return torch.log(self.layers[-1](x))
         else:
-            print('passing just to return')
             return self.layers[-1](x)
-
+            
 class ModelTrainerTorchMLP:
     def __init__(self, 
                  train_config = None,
