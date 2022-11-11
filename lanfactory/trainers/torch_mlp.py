@@ -101,7 +101,7 @@ class TorchMLP(nn.Module):
                  input_shape = 10,
                  save_folder = None, 
                  generative_model_id = 'ddm',
-                 network_type = 'regressor', # 'classifier', 'regressor'
+                 train_output_type = 'logprob', # 'classifier', 'regressor'
                  ):
 
         super(TorchMLP, self).__init__()
@@ -114,7 +114,7 @@ class TorchMLP(nn.Module):
         self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
-        self.network_type = network_type
+        self.train_output_type = train_output_type
         self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh(), 'sigmoid': torch.nn.Sigmoid()}
 
         # Build the network ------
@@ -148,15 +148,15 @@ class TorchMLP(nn.Module):
     def forward(self, x):
         for i in range(self.len_layers - 1):
             x = self.layers[i](x)
-        if self.train or self.network_type == 'regressor':
+        if self.train or self.train_output_type == 'logprob':
             return self.layers[-1](x)
-        elif self.network_type == 'logit_classifier':
+        elif self.train_output_type == 'logits':
             return - torch.log((1 + torch.exp(- self.layers[-1](x))))  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
-        elif self.network_type == 'classifier':
+        elif self.train_output_type == 'prob':
             return torch.log(self.layers[-1](x))
         else:
             return self.layers[-1](x)
-            
+
 class ModelTrainerTorchMLP:
     def __init__(self, 
                  train_config = None,
