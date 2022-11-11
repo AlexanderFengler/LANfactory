@@ -148,7 +148,7 @@ class TorchMLP(nn.Module):
     def forward(self, x):
         for i in range(self.len_layers - 1):
             x = self.layers[i](x)
-        if self.train or self.train_output_type == 'logprob':
+        if self.training or self.train_output_type == 'logprob':
             print('passing train version')
             return self.layers[-1](x)
         elif self.train_output_type == 'logits':
