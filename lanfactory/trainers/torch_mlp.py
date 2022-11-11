@@ -96,12 +96,14 @@ class DatasetTorch(torch.utils.data.Dataset):
         return X, y
 
 class TorchMLP(nn.Module):
+    # AF-TODO: Potentially split this via super-class 
+    # In the end I want 'eval', but differentiable w.r.t to input ...., might be a problem
     def __init__(self, 
                  network_config = None, 
                  input_shape = 10,
                  save_folder = None, 
                  generative_model_id = 'ddm',
-                 train_output_type = 'logprob', # 'classifier', 'regressor'
+                 train_output_type = 'logprob', # 'logprob', 'logits', 'prob'
                  ):
 
         super(TorchMLP, self).__init__()
@@ -151,12 +153,12 @@ class TorchMLP(nn.Module):
         if self.training or self.train_output_type == 'logprob':
             return self.layers[-1](x)
         elif self.train_output_type == 'logits':
-            return - torch.log((1 + torch.exp(- self.layers[-1](x))))  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
+            return - torch.log((1 + torch.exp(-self.layers[-1](x))))  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
         elif self.train_output_type == 'prob':
             return torch.log(self.layers[-1](x))
         else:
             return self.layers[-1](x)
-            
+
 class ModelTrainerTorchMLP:
     def __init__(self, 
                  train_config = None,
