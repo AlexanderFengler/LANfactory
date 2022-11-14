@@ -118,7 +118,7 @@ class TorchMLP(nn.Module):
         self.network_config = network_config
         self.train_output_type = train_output_type
         self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh(), 'sigmoid': torch.nn.Sigmoid()}
-
+        
         # Build the network ------
         self.layers = nn.ModuleList()
         
