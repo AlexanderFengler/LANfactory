@@ -1,5 +1,4 @@
-network_config_mlp = {'layer_types': ['dense', 'dense', 'dense'],
-                      'layer_sizes': [100, 100, 1],
+network_config_mlp = {'layer_sizes': [100, 100, 1],
                       'activations': ['tanh', 'tanh', 'linear'],
                       'train_output_type': 'logprob'}
                       # 'callbacks': ['checkpoint', 'earlystopping', 'reducelr']}
