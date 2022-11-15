@@ -11,6 +11,11 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+try:
+    import wandb
+except:
+    print('wandb not available')
+
 class DatasetTorch(torch.utils.data.Dataset):
     def __init__(self, 
                  file_IDs, 
@@ -190,7 +195,6 @@ class ModelTrainerTorchMLP:
                        allow_abs_path_folder_generation = allow_abs_path_folder_generation) # AF-TODO import folder
 
         try:
-            import wandb
             wandb.init(project = "choicep_" + self.model.generative_model_id)
 
             wandb.config = {
@@ -244,11 +248,11 @@ class ModelTrainerTorchMLP:
                 loss = self.loss_fun(pred, yb)
 
                 # Log wandb if possible
-                # try:
-                wandb.log({"loss": loss})
+                try:
+                    wandb.log({"loss": loss})
                 # print('logged loss')
-                # except:
-                #     pass
+                except:
+                    pass
 
                 loss.backward()
                 self.optimizer.step()
