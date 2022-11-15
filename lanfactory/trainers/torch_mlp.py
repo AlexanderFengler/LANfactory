@@ -195,7 +195,13 @@ class ModelTrainerTorchMLP:
                        allow_abs_path_folder_generation = allow_abs_path_folder_generation) # AF-TODO import folder
 
         try:
-            wandb.init(project = "choicep_" + self.model.generative_model_id)
+            wandb.init(project = "choicep_" + self.model.generative_model_id,
+                       name = self.model.model_id + '_wd_' + str(self.train_config['weight_decay']),
+                       config = {"learning_rate": self.train_config['learning_rate'],
+                                 "weight_decay": self.train_config['weight_decay'],
+                                 "epochs": self.train_config['n_epochs'],
+                                 "batch_size": self.train_config['gpu_batch_size'] if torch.cuda.is_available() else self.train_config['cpu_batch_size'], 
+                                })
 
             wandb.config = {
                 "learning_rate": self.train_config['learning_rate'],
