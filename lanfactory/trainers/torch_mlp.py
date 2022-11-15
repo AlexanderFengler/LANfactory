@@ -244,11 +244,11 @@ class ModelTrainerTorchMLP:
                 loss = self.loss_fun(pred, yb)
 
                 # Log wandb if possible
-                try:
-                    wandb.log({"loss": loss})
-                    print('logged loss')
-                except:
-                    pass
+                # try:
+                wandb.log({"loss": loss})
+                # print('logged loss')
+                # except:
+                #     pass
 
                 loss.backward()
                 self.optimizer.step()
