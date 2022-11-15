@@ -118,7 +118,7 @@ class TorchMLP(nn.Module):
         self.network_config = network_config
         self.train_output_type = train_output_type
         self.activations = {'relu': torch.nn.ReLU(), 'tanh': torch.nn.Tanh(), 'sigmoid': torch.nn.Sigmoid()}
-        
+
         # Build the network ------
         self.layers = nn.ModuleList()
         
@@ -241,10 +241,11 @@ class ModelTrainerTorchMLP:
             print('Epoch took {} / {},  took {} seconds'.format(epoch, self.train_config['n_epochs'], time() - epoch_s_t))
             
             # Start validation
-            self.model.eval()
+            # self.model.eval()
             with torch.no_grad():
                 valid_loss = sum(self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev)) for xb, yb in self.data_loader_valid) / self.data_loader_valid.__len__()
             print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], valid_loss))
+            #self.optimizer.zero_grad()
             
             self.training_history.values[epoch, :] = [epoch, valid_loss.cpu()]
             
