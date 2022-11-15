@@ -199,6 +199,8 @@ class ModelTrainerTorchMLP:
                 "epochs": self.train_config['n_epochs'],
                 "batch_size": self.train_config['gpu_batch_size'] if torch.cuda.is_available() else self.train_config['cpu_batch_size'], 
             }
+
+            print("Succefully initialized wandb!")
         except:
             print('wandb not available, not storing results there') 
         
@@ -273,6 +275,13 @@ class ModelTrainerTorchMLP:
         if save_model == True:   
             print('Saving model state dict')
             torch.save(self.model.state_dict(), self.output_folder + "/" + self.model.model_id + "_torch_state_dict.pt")
+
+        # Upload wandb data
+        try:
+            wandb.finish()
+            print('wandb uploaded')
+        except:
+            pass
 
         print('Training finished successfully...')
 
