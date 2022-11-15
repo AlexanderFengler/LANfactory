@@ -246,6 +246,7 @@ class ModelTrainerTorchMLP:
                 # Log wandb if possible
                 try:
                     wandb.log({"loss": loss})
+                    print('logged loss')
                 except:
                     pass
 
