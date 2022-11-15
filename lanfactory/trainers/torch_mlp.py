@@ -188,6 +188,19 @@ class ModelTrainerTorchMLP:
         self.__load_weights()
         try_gen_folder(folder = self.output_folder, 
                        allow_abs_path_folder_generation = allow_abs_path_folder_generation) # AF-TODO import folder
+
+        try:
+            import wandb
+            wandb.init(project = "choicep_" + self.model.generative_model_id)
+
+            wandb.config = {
+                "learning_rate": self.train_config['learning_rate'],
+                "weight_decay": self.train_config['weight_decay'],
+                "epochs": self.train_config['n_epochs'],
+                "batch_size": self.train_config['gpu_batch_size'] if torch.cuda.is_available() else self.train_config['cpu_batch_size'], 
+            }
+        except:
+            print('wandb not available, not storing results there') 
         
     def __get_loss(self):
         if self.train_config['loss'] == 'huber':
@@ -228,6 +241,12 @@ class ModelTrainerTorchMLP:
                 pred = self.model(xb)
                 loss = self.loss_fun(pred, yb)
 
+                # Log wandb if possible
+                try:
+                    wandb.log({"loss": loss})
+                except:
+                    pass
+
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -245,10 +264,9 @@ class ModelTrainerTorchMLP:
             with torch.no_grad():
                 valid_loss = sum(self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev)) for xb, yb in self.data_loader_valid) / self.data_loader_valid.__len__()
             print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], valid_loss))
-            #self.optimizer.zero_grad()
-            
+
             self.training_history.values[epoch, :] = [epoch, valid_loss.cpu()]
-            
+
         if save_history == True:
             print('Saving training history')
             pd.DataFrame(self.training_history).to_csv(self.output_folder + "/" + self.model.model_id + "_torch_training_history.csv")
