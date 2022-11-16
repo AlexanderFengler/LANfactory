@@ -243,7 +243,7 @@ class ModelTrainerTorchMLP:
         # Add scheduler if scheduler option supplied
         if self.train_config['lr_scheduler'] is not None:
             if self.train_config['lr_scheduler'] == 'reduce_on_plateau':
-                self.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 
+                self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 
                                                           mode = 'min',
                                                           factor = self.train_config['lr_scheduler_params']['factor'] if 'factor' in \
                                                             self.train_config['lr_scheduler_params'].keys() else 0.1,
@@ -258,7 +258,7 @@ class ModelTrainerTorchMLP:
                                                           verbose = self.train_config['lr_scheduler_params']['verbose'] if 'verbose' in \
                                                             self.train_config['lr_scheduler_params'].keys() else True)
             elif self.train_config['lr_scheduler'] == 'multiply':
-                self.optim.lr_scheduler.ExponentialLR(self.optimizer,
+                self.scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer,
                                                       gamma = self.train_config['lr_scheduler_params']['factor'] if 'factor' in \
                                                             self.train_config['lr_scheduler_params'].keys() else 0.1,
                                                       last_epoch = -1,
@@ -274,10 +274,17 @@ class ModelTrainerTorchMLP:
     def train_model(self, save_history = True, save_model = True, verbose = 1):
         self.training_history = pd.DataFrame(np.zeros((self.train_config['n_epochs'], 2)), columns = ['epoch', 'val_loss'])
         
+        try:
+            wandb.watch(self.model, criterion = None, log = 'all', log_freq = 1000)
+        except:
+            pass
+        
+        step_cnt = 0
         for epoch in range(self.train_config['n_epochs']):
             self.model.train()
             cnt = 0
             epoch_s_t = time()
+            
             # Training loop
             for xb, yb in self.data_loader_train:
                 # Shift data to device
@@ -289,22 +296,18 @@ class ModelTrainerTorchMLP:
                 pred = self.model(xb)
                 loss = self.loss_fun(pred, yb)
 
-                # Log wandb if possible
-                try:
-                    wandb.log({"loss": loss})
-                # print('logged loss')
-                except:
-                    pass
-
                 loss.backward()
                 self.optimizer.step()
+                self.scheduler.step()
                 self.optimizer.zero_grad()
 
                 if (cnt % 100) == 0 and verbose == 1:
                     print('epoch: {} / {}, batch: {} / {}, batch_loss: {}'.format(epoch, self.train_config['n_epochs'], cnt, self.data_loader_train.__len__(), loss))
                 elif (cnt % 1000) == 0 and verbose == 2:
                     print('epoch: {} / {}, batch: {} / {}, batch_loss: {}'.format(epoch, self.train_config['n_epochs'], cnt, self.data_loader_train.__len__(), loss))
+                
                 cnt += 1
+                step_cnt += 1
 
             print('Epoch took {} / {},  took {} seconds'.format(epoch, self.train_config['n_epochs'], time() - epoch_s_t))
             
@@ -315,6 +318,15 @@ class ModelTrainerTorchMLP:
             print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], valid_loss))
 
             self.training_history.values[epoch, :] = [epoch, valid_loss.cpu()]
+
+            # Log wandb if possible
+            try:
+                wandb.log({"loss": loss,
+                           "valid_loss": valid_loss}, 
+                           step = step_cnt)
+            # print('logged loss')
+            except:
+                pass
 
         if save_history == True:
             print('Saving training history')
