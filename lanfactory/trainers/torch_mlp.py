@@ -181,7 +181,7 @@ class ModelTrainerTorchMLP:
         print('Torch Device: ', self.dev)
         self.train_config = train_config
         self.model = model.to(self.dev)
-        self.output_folder = output_folder + '/' + self.model.generative_model_id + '/'
+        self.output_folder = output_folder + '/'
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
         self.data_loader_train = data_loader_train
         self.data_loader_valid = data_loader_valid
@@ -196,11 +196,15 @@ class ModelTrainerTorchMLP:
 
         try:
             wandb.init(project = "choicep_" + self.model.generative_model_id,
-                       name = self.model.model_id + '_wd_' + str(self.train_config['weight_decay']),
+                       name = 'wd_' + str(self.train_config['weight_decay']) + '_optim_' + str(self.train_config['optimizer']) + '_' + self.model.model_id,
                        config = {"learning_rate": self.train_config['learning_rate'],
                                  "weight_decay": self.train_config['weight_decay'],
                                  "epochs": self.train_config['n_epochs'],
                                  "batch_size": self.train_config['gpu_batch_size'] if torch.cuda.is_available() else self.train_config['cpu_batch_size'], 
+                                 "generative_model": self.model.generative_model_id,
+                                 "lr_scheduler": self.train_config['lr_scheduler'],
+                                 "lr_scheduler_params": self.train_config['lr_scheduler_params'],
+                                 "identifier": self.model.model_id,
                                 })
 
             wandb.config = {
@@ -208,7 +212,8 @@ class ModelTrainerTorchMLP:
                 "weight_decay": self.train_config['weight_decay'],
                 "epochs": self.train_config['n_epochs'],
                 "batch_size": self.train_config['gpu_batch_size'] if torch.cuda.is_available() else self.train_config['cpu_batch_size'], 
-            }
+                "model_id": self.model.model_id
+                }
 
             print("Succefully initialized wandb!")
         except:
@@ -226,9 +231,40 @@ class ModelTrainerTorchMLP:
             
     def __get_optimizer(self):
         if self.train_config['optimizer'] == 'adam':
-            self.optimizer = optim.Adam(self.model.parameters(), weight_decay = self.train_config['weight_decay'])  
+            self.optimizer = optim.Adam(self.model.parameters(), 
+                                        weight_decay = self.train_config['weight_decay'],
+                                        lr = self.train_config['learning_rate'])  
         elif self.train_config['optimizer'] == 'sgd':
-            self.optimizer = optim.SGD(self.model.parameters(), weight_decay = self.train_config['weight_decay'])
+            self.optimizer = optim.SGD(self.model.parameters(), 
+                                       weight_decay = self.train_config['weight_decay'], 
+                                       lr = self.train_config['learning_rate'])
+
+
+        # Add scheduler if scheduler option supplied
+        if self.train_config['lr_scheduler'] is not None:
+            if self.train_config['lr_scheduler'] == 'reduce_on_plateau':
+                self.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 
+                                                          mode = 'min',
+                                                          factor = self.train_config['lr_scheduler_params']['factor'] if 'factor' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else 0.1,
+                                                          patience = self.train_config['lr_scheduler_params']['patience'] if 'patience' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else 2,
+                                                          threshold = self.train_config['lr_scheduler_params']['threshold'] if 'threshold' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else 0.001,
+                                                          threshold_mode = 'rel',
+                                                          cooldown = 0,
+                                                          min_lr = self.train_config['lr_scheduler_params']['min_lr'] if 'min_lr' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else 0.00000001,
+                                                          verbose = self.train_config['lr_scheduler_params']['verbose'] if 'verbose' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else True)
+            elif self.train_config['lr_scheduler'] == 'multiply':
+                self.optim.lr_scheduler.ExponentialLR(self.optimizer,
+                                                      gamma = self.train_config['lr_scheduler_params']['factor'] if 'factor' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else 0.1,
+                                                      last_epoch = -1,
+                                                      verbose = self.train_config['lr_scheduler_params']['verbose'] if 'verbose' in \
+                                                            self.train_config['lr_scheduler_params'].keys() else True)
+            
             
     def __load_weights(self):
         #raise NotImplementedError
