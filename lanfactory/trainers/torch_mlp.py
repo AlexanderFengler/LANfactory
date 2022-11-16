@@ -298,7 +298,6 @@ class ModelTrainerTorchMLP:
 
                 loss.backward()
                 self.optimizer.step()
-                self.scheduler.step()
                 self.optimizer.zero_grad()
 
                 if (cnt % 100) == 0 and verbose == 1:
@@ -314,15 +313,22 @@ class ModelTrainerTorchMLP:
             # Start validation
             # self.model.eval()
             with torch.no_grad():
-                valid_loss = sum(self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev)) for xb, yb in self.data_loader_valid) / self.data_loader_valid.__len__()
-            print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], valid_loss))
-
-            self.training_history.values[epoch, :] = [epoch, valid_loss.cpu()]
+                val_loss = sum(self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev)) for xb, yb in self.data_loader_valid) / self.data_loader_valid.__len__()
+            print('epoch {} / {}, validation_loss: {:2.4}'.format(epoch, self.train_config['n_epochs'], val_loss))
+            
+            # Scheduler step:
+            if self.train_config['lr_scheduler'] is not None:
+                if self.train_config['lr_scheduler'] == 'reduce_on_plateau':
+                    self.scheduler.step(val_loss)
+                elif self.train_config['lr_scheduler'] == 'multiply':
+                    self.scheduler.step()
+            
+            self.training_history.values[epoch, :] = [epoch, val_loss.cpu()]
 
             # Log wandb if possible
             try:
                 wandb.log({"loss": loss,
-                           "valid_loss": valid_loss}, 
+                           "val_loss": val_loss}, 
                            step = step_cnt)
             # print('logged loss')
             except:
