@@ -12,6 +12,12 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 try:
+    import jax
+    from jax import numpy as jnp
+except:
+    print('jax not available')
+
+try:
     import wandb
 except:
     print('wandb not available')
@@ -42,13 +48,6 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.features_key = features_key
         self.label_key = label_key
         self.out_framework = out_framework
-
-        if self.out_framework == 'jax':
-            try:
-                import jax
-                from jax import numpy as jnp
-            except:
-                raise ValueError("out_framework argument set to jax, but jax cannot be imported!")
 
         # get metadata from loading a test file
         self.__init_file_shape()
