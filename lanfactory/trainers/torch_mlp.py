@@ -93,13 +93,12 @@ class DatasetTorch(torch.utils.data.Dataset):
         # Generates data containing batch_size samples 
         if self.out_framework == 'torch':
             X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
-            y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]),1)
+            y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]), 1)
         elif self.out_framework == 'jax':
             X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
-            y = jnp.array(self.tmp_data[self.label_key][batch_ids])
+            y = jnp.expand_dims(jnp.array(self.tmp_data[self.label_key][batch_ids]), axis = 1)
         else:
             raise ValueError("The out_framework argument received an unknown input")
-
 
         if self.label_prelog_cutoff_low is not None:
             if self.out_framework == 'torch':
