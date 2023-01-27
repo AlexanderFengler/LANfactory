@@ -96,7 +96,7 @@ class DatasetTorch(torch.utils.data.Dataset):
             y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]),1)
         elif self.out_framework == 'jax':
             X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
-            y = jnp.array(self.tmp_data[self.label_key][batch_ids, :])
+            y = jnp.array(self.tmp_data[self.label_key][batch_ids])
         else:
             raise ValueError("The out_framework argument received an unknown input")
 
