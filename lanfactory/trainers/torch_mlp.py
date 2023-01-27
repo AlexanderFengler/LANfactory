@@ -26,6 +26,7 @@ class DatasetTorch(torch.utils.data.Dataset):
                  label_simple_upper_bound = None,
                  features_key = 'data',
                  label_key = 'labels',
+                 out_framework = 'torch',
                  ):
 
         # AF-TODO: Take device into account at this level, this currently happens only in the training loop
@@ -40,6 +41,14 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.tmp_data = None
         self.features_key = features_key
         self.label_key = label_key
+        self.out_framework = out_framework
+
+        if self.out_framework == 'jax':
+            try:
+                import jax
+                from jax import numpy as jnp
+            except:
+                raise ValueError("out_framework argument set to jax, but jax cannot be imported!")
 
         # get metadata from loading a test file
         self.__init_file_shape()
@@ -83,21 +92,40 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __data_generation(self, batch_ids = None):
         # Generates data containing batch_size samples 
-        X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
-        y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]),1)
-        
+        if self.out_framework == 'torch':
+            X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
+            y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]),1)
+        elif self.out_framework == 'jax':
+            X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
+            y = jnp.array(self.tmp_data[self.label_key][batch_ids, :])
+        else:
+            raise ValueError("The out_framework argument received an unknown input")
+
+
         if self.label_prelog_cutoff_low is not None:
-            y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
+            if self.out_framework == 'torch':
+                y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
+            elif self.out_framework == 'jax':
+                y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
         
         if self.label_prelog_cutoff_high is not None:
-            y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
+            if self.out_framework == 'torch':
+                y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
+            elif self.out_framework == 'jax':
+                y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
 
         if self.label_simple_lower_bound is not None:
-            y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
-
+            if self.out_framework == 'torch':
+                y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
+            elif self.out_framework == 'jax':
+                y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
+        
         if self.label_simple_upper_bound is not None:
-            y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
-
+            if self.out_framework == 'torch':
+                y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
+            elif self.out_framework == 'jax':
+                y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
+        
         return X, y
 
 class TorchMLP(nn.Module):
@@ -376,6 +404,21 @@ class LoadTorchMLPInfer:
 
     @torch.no_grad()
     def predict_on_batch(self, x = None):
+        """
+        Intended as function that computes trial wise log-likelihoods from a matrix input. 
+        To be used primarily through the HDDM toolbox.
+
+        :Arguments:
+            x: numpy.ndarray(dtype=numpy.float32)
+                Matrix which will be passed through the network. LANs expect the matrix columns to follow a specific order. 
+                When used in HDDM, x will be passed as follows. The first few columns are trial wise model parameters 
+                (order specified in the model_config file under the 'params' key). The last two columns are filled with trial wise
+                reaction times and choices. When not used via HDDM, no such restriction applies.
+        :Output:
+            numpy.ndarray(dtype = numpy.float32)
+                Output of the network. When called through HDDM, this is expected as trial-wise log likelihoods of a given generative model.
+
+        """
         return self.net(torch.from_numpy(x).to(self.dev)).cpu().numpy()
 
 class LoadTorchMLP:
