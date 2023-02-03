@@ -91,15 +91,16 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __data_generation(self, batch_ids = None):
         # Generates data containing batch_size samples 
-        print(jax.devices("gpu"))
-        print(jax.devices("cpu"))
-        
+        if self.out_framework == 'jax':
+            cpu_device = jax.devices("cpu")[0]
+
         if self.out_framework == 'torch':
             X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
             y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]), 1)
         elif self.out_framework == 'jax':
-            X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
-            y = jnp.expand_dims(jnp.array(self.tmp_data[self.label_key][batch_ids]), axis = 1)
+            with jax.default_device(cpu_device):
+                X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
+                y = jnp.expand_dims(jnp.array(self.tmp_data[self.label_key][batch_ids]), axis = 1)
         elif self.out_framework == 'numpy':
             X = self.tmp_data[self.features_key][batch_ids, :]
             y = np.expand_dims(self.tmp_data[self.label_key][batch_ids], axis = 1)
@@ -110,29 +111,33 @@ class DatasetTorch(torch.utils.data.Dataset):
             if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
             elif self.out_framework == 'jax':
-                y = y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
+                with jax.default_device(cpu_device):
+                    y = y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
         
         if self.label_prelog_cutoff_high is not None:
             if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
             elif self.out_framework == 'jax':
-                y = y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
+                with jax.default_device(cpu_device):
+                    y = y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
 
         if self.label_simple_lower_bound is not None:
             if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
             elif self.out_framework == 'jax':
-                y = y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
+                with jax.default_device(cpu_device):
+                    y = y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
         
         if self.label_simple_upper_bound is not None:
             if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
             elif self.out_framework == 'jax':
-                y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
+                with jax.default_device(cpu_device):
+                    y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
 
-        print('type of output from DatasetTorch')
-        print(type(X))
-        print(type(y))
+        # print('type of output from DatasetTorch')
+        # print(type(X))
+        # print(type(y))
         return X, y
 
 class TorchMLP(nn.Module):
