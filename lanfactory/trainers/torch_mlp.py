@@ -102,8 +102,10 @@ class DatasetTorch(torch.utils.data.Dataset):
 
         if self.label_prelog_cutoff_low is not None:
             if self.out_framework == 'torch':
+                print('passing torch')
                 y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
             elif self.out_framework == 'jax':
+                print('passing jax')
                 y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
         
         if self.label_prelog_cutoff_high is not None:
