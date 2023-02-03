@@ -97,6 +97,9 @@ class DatasetTorch(torch.utils.data.Dataset):
         elif self.out_framework == 'jax':
             X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
             y = jnp.expand_dims(jnp.array(self.tmp_data[self.label_key][batch_ids]), axis = 1)
+        elif self.out_framework == 'numpy':
+            X = self.tmp_data[self.features_key][batch_ids, :]
+            y = np.expand_dims(self.tmp_data[self.label_key][batch_ids], axis = 1)
         else:
             raise ValueError("The out_framework argument received an unknown input")
 
@@ -107,19 +110,19 @@ class DatasetTorch(torch.utils.data.Dataset):
                 y = y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
         
         if self.label_prelog_cutoff_high is not None:
-            if self.out_framework == 'torch':
+            if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
             elif self.out_framework == 'jax':
                 y = y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
 
         if self.label_simple_lower_bound is not None:
-            if self.out_framework == 'torch':
+            if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
             elif self.out_framework == 'jax':
                 y = y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
         
         if self.label_simple_upper_bound is not None:
-            if self.out_framework == 'torch':
+            if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
             elif self.out_framework == 'jax':
                 y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
