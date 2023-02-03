@@ -104,7 +104,7 @@ class DatasetTorch(torch.utils.data.Dataset):
             raise ValueError("The out_framework argument received an unknown input")
 
         if self.label_prelog_cutoff_low is not None:
-            if self.out_framework == 'torch':
+            if self.out_framework == 'torch' or self.out_framework == 'numpy':
                 y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
             elif self.out_framework == 'jax':
                 y = y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
@@ -126,7 +126,10 @@ class DatasetTorch(torch.utils.data.Dataset):
                 y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
             elif self.out_framework == 'jax':
                 y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
-        
+
+        print('type of output from DatasetTorch')
+        print(type(X))
+        print(type(y))
         return X, y
 
 class TorchMLP(nn.Module):
