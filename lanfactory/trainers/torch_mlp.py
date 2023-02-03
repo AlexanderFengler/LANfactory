@@ -91,6 +91,9 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __data_generation(self, batch_ids = None):
         # Generates data containing batch_size samples 
+        print(jax.devices("gpu"))
+        print(jax.devices("cpu"))
+        
         if self.out_framework == 'torch':
             X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
             y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]), 1)
