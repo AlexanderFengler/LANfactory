@@ -106,25 +106,25 @@ class DatasetTorch(torch.utils.data.Dataset):
                 y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
             elif self.out_framework == 'jax':
                 print('passing jax')
-                y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
+                y = y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
         
         if self.label_prelog_cutoff_high is not None:
             if self.out_framework == 'torch':
                 y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
             elif self.out_framework == 'jax':
-                y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
+                y = y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
 
         if self.label_simple_lower_bound is not None:
             if self.out_framework == 'torch':
                 y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
             elif self.out_framework == 'jax':
-                y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
+                y = y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
         
         if self.label_simple_upper_bound is not None:
             if self.out_framework == 'torch':
                 y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
             elif self.out_framework == 'jax':
-                y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
+                y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
         
         return X, y
 
