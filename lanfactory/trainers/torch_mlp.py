@@ -24,7 +24,7 @@ except:
 
 class DatasetTorch(torch.utils.data.Dataset):
     def __init__(self, 
-                 file_IDs, 
+                 file_ids, 
                  batch_size = 32,
                  label_prelog_cutoff_low = 1e-7,
                  label_prelog_cutoff_high = None,
@@ -38,8 +38,8 @@ class DatasetTorch(torch.utils.data.Dataset):
         # AF-TODO: Take device into account at this level, this currently happens only in the training loop
         # Initialization
         self.batch_size = batch_size
-        self.file_IDs = file_IDs
-        self.indexes = np.arange(len(self.file_IDs))
+        self.file_ids = file_ids
+        self.indexes = np.arange(len(self.file_ids))
         self.label_prelog_cutoff_low = label_prelog_cutoff_low
         self.label_prelog_cutoff_high = label_prelog_cutoff_high
         self.label_simple_upper_bound = label_simple_upper_bound
@@ -48,13 +48,14 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.features_key = features_key
         self.label_key = label_key
         self.out_framework = out_framework
+        self.data_generator_config = 'None'
 
         # get metadata from loading a test file
         self.__init_file_shape()
 
     def __len__(self):
         # Number of batches per epoch
-        return int(np.floor((len(self.file_IDs) * ((self.file_shape_dict['inputs'][0] // self.batch_size) * self.batch_size)) / self.batch_size))
+        return int(np.floor((len(self.file_ids) * ((self.file_shape_dict['inputs'][0] // self.batch_size) * self.batch_size)) / self.batch_size))
 
     def __getitem__(self, index):
         # Check if it is time to load the next file
@@ -68,7 +69,7 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __load_file(self, file_index):
         # Load file and shuffle the indices
-        self.tmp_data = pickle.load(open(self.file_IDs[file_index], 'rb'))
+        self.tmp_data = pickle.load(open(self.file_ids[file_index], 'rb'))
         shuffle_idx = np.random.choice(self.tmp_data[self.features_key].shape[0], 
                                         size = self.tmp_data[self.features_key].shape[0],
                                          replace = True)
@@ -78,11 +79,14 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __init_file_shape(self):
         # Function gets dimensionalities form a test data file
-        init_file = pickle.load(open(self.file_IDs[0], 'rb'))
+        init_file = pickle.load(open(self.file_ids[0], 'rb'))
         self.file_shape_dict = {'inputs': init_file[self.features_key].shape, 'labels': init_file[self.label_key].shape}
         self.batches_per_file = int(self.file_shape_dict['inputs'][0] / self.batch_size)
         self.input_dim = self.file_shape_dict['inputs'][1]
         
+        if 'generator_config' in init_file.keys():
+            self.data_generator_config = init_file['generator_config']
+
         if len(self.file_shape_dict['labels']) > 1:
             self.label_dim = self.file_shape_dict['labels'][1]
         else:
@@ -135,9 +139,6 @@ class DatasetTorch(torch.utils.data.Dataset):
                 with jax.default_device(cpu_device):
                     y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
 
-        # print('type of output from DatasetTorch')
-        # print(type(X))
-        # print(type(y))
         return X, y
 
 class TorchMLP(nn.Module):
@@ -148,7 +149,7 @@ class TorchMLP(nn.Module):
                  input_shape = 10,
                  save_folder = None, 
                  generative_model_id = 'ddm',
-                 train_output_type = 'logprob', # 'logprob', 'logits', 'prob'
+                 train_output_type = 'logprob', # 'logprob', 'logits',
                  ):
 
         super(TorchMLP, self).__init__()
@@ -199,8 +200,6 @@ class TorchMLP(nn.Module):
             return self.layers[-1](x)
         elif self.train_output_type == 'logits':
             return - torch.log((1 + torch.exp(-self.layers[-1](x))))  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
-        elif self.train_output_type == 'prob':
-            return torch.log(self.layers[-1](x))
         else:
             return self.layers[-1](x)
 
