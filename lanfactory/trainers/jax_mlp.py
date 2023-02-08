@@ -268,14 +268,14 @@ class ModelTrainerJaxMLP:
             byte_output = flax.serialization.to_bytes(state.params)
             
             # Write to file
-            train_state_path = full_path + "_train_state.py"
+            train_state_path = full_path + "_train_state.jax"
             file = open(train_state_path, 'wb')
             file.write(byte_output)
             file.close()
             print("Saving model parameters to: " + train_state_path)
         
         if self.save_config or self.save_all:
-            config_path = full_path + "_traing_config.pickle"
+            config_path = full_path + "_train_config.pickle"
             pickle.dump(self.config, 
                         open(config_path, "wb"))
             print("Saving training config to: " + config_path)
@@ -285,6 +285,6 @@ class ModelTrainerJaxMLP:
             pickle.dump({'data_generator_config': self.train_dl.dataset.data_generator_config,
                          'data_file_ids': self.train_dl.dataset.file_ids},
                         open(training_data_details_path, "wb"))
-            print("Saving training data details to: " + training_data_details_path, "wb")
+            print("Saving training data details to: " + training_data_details_path)
 
         return state
