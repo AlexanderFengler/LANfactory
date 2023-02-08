@@ -12,24 +12,16 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 try:
-    import jax
-    from jax import numpy as jnp
-except:
-    print('jax not available')
-
-try:
     import wandb
 except:
     print('wandb not available')
 
 class DatasetTorch(torch.utils.data.Dataset):
-    def __init__(self, 
-                 file_ids, 
+    def __init__(self,
+                 file_ids,
                  batch_size = 32,
-                 label_prelog_cutoff_low = 1e-7,
-                 label_prelog_cutoff_high = None,
-                 label_simple_lower_bound = None,
-                 label_simple_upper_bound = None,
+                 label_lower_bound = None,
+                 label_upper_bound = None,
                  features_key = 'data',
                  label_key = 'labels',
                  out_framework = 'torch',
@@ -40,15 +32,14 @@ class DatasetTorch(torch.utils.data.Dataset):
         self.batch_size = batch_size
         self.file_ids = file_ids
         self.indexes = np.arange(len(self.file_ids))
-        self.label_prelog_cutoff_low = label_prelog_cutoff_low
-        self.label_prelog_cutoff_high = label_prelog_cutoff_high
-        self.label_simple_upper_bound = label_simple_upper_bound
-        self.label_simple_lower_bound = label_simple_lower_bound
-        self.tmp_data = None
+        self.label_upper_bound = label_upper_bound
+        self.label_lower_bound = label_lower_bound
         self.features_key = features_key
         self.label_key = label_key
         self.out_framework = out_framework
         self.data_generator_config = 'None'
+
+        self.tmp_data = None
 
         # get metadata from loading a test file
         self.__init_file_shape()
@@ -95,49 +86,14 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __data_generation(self, batch_ids = None):
         # Generates data containing batch_size samples 
-        if self.out_framework == 'jax':
-            cpu_device = jax.devices("cpu")[0]
+        X = self.tmp_data[self.features_key][batch_ids, :]
+        y = np.expand_dims(self.tmp_data[self.label_key][batch_ids], axis = 1)
 
-        if self.out_framework == 'torch':
-            X = torch.tensor(self.tmp_data[self.features_key][batch_ids, :])
-            y = torch.unsqueeze(torch.tensor(self.tmp_data[self.label_key][batch_ids]), 1)
-        elif self.out_framework == 'jax':
-            with jax.default_device(cpu_device):
-                X = jnp.array(self.tmp_data[self.features_key][batch_ids, :])
-                y = jnp.expand_dims(jnp.array(self.tmp_data[self.label_key][batch_ids]), axis = 1)
-        elif self.out_framework == 'numpy':
-            X = self.tmp_data[self.features_key][batch_ids, :]
-            y = np.expand_dims(self.tmp_data[self.label_key][batch_ids], axis = 1)
-        else:
-            raise ValueError("The out_framework argument received an unknown input")
+        if self.label_lower_bound is not None:
+            y[y < self.label_lower_bound] = self.label_lower_bound
 
-        if self.label_prelog_cutoff_low is not None:
-            if self.out_framework == 'torch' or self.out_framework == 'numpy':
-                y[y < np.log(self.label_prelog_cutoff_low)] = np.log(self.label_prelog_cutoff_low)
-            elif self.out_framework == 'jax':
-                with jax.default_device(cpu_device):
-                    y = y.at[y < np.log(self.label_prelog_cutoff_low)].set(np.log(self.label_prelog_cutoff_low))
-        
-        if self.label_prelog_cutoff_high is not None:
-            if self.out_framework == 'torch' or self.out_framework == 'numpy':
-                y[y > np.log(self.label_prelog_cutoff_high)] = np.log(self.label_prelog_cutoff_high)
-            elif self.out_framework == 'jax':
-                with jax.default_device(cpu_device):
-                    y = y.at[y > np.log(self.label_prelog_cutoff_high)].set(np.log(self.label_prelog_cutoff_high))
-
-        if self.label_simple_lower_bound is not None:
-            if self.out_framework == 'torch' or self.out_framework == 'numpy':
-                y[y < self.label_simple_lower_bound] = self.label_simple_lower_bound
-            elif self.out_framework == 'jax':
-                with jax.default_device(cpu_device):
-                    y = y.at[y < self.label_simple_lower_bound].set(self.label_simple_lower_bound)
-        
-        if self.label_simple_upper_bound is not None:
-            if self.out_framework == 'torch' or self.out_framework == 'numpy':
-                y[y > self.label_simple_upper_bound] = self.label_simple_upper_bound
-            elif self.out_framework == 'jax':
-                with jax.default_device(cpu_device):
-                    y = y.at[y > self.label_simple_upper_bound].set(self.label_simple_upper_bound)
+        if self.label_upper_bound is not None:
+            y[y > self.label_upper_bound] = self.label_upper_bound
 
         return X, y
 
