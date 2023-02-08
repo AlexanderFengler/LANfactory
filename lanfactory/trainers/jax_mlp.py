@@ -63,6 +63,61 @@ class MLPJax(nn.Module):
             x = x # just for pedagogy
             
         return x
+
+    def load_state_from_file(self, 
+                             seed = 42,
+                             input_dim = 6,
+                             file_path = None):
+
+        if file_path is None:
+            raise ValueError('file_path argument needs to be speficied! ' + \
+                             '(Currently Set to its default: None)'
+                             )
+        
+        rng_, key1_ = jax.random.split(jax.random.PRNGKey(42), 2)
+        rng_, key2_ = jax.random.split(rng_)
+        x = jax.random.uniform(key1_, (1, input_dim))
+        state = self.init(key2_, x)
+
+        with open(file_path, 'rb') as file_:
+            loaded_state_bytes = file_.read()
+        
+        loaded_state = flax.serialization.from_bytes(state, loaded_state_bytes)
+        return loaded_state
+
+    def make_forward_partial(self,
+                             seed = 42, 
+                             input_dim = 6,
+                             state_dict_from_file = True,
+                             state = None,
+                             file_path = None,
+                             add_jitted = False,
+                            ):
+
+        if state_dict_from_file:
+            if file_path is None:
+                raise ValueError("file_path argument can't be None, " + \
+                                 "if the state_dict_from_file argument is True!")
+            else:
+                loaded_state = self.load_state_from_file(seed = seed,
+                                                         input_dim = input_dim,
+                                                         file_path = file_path)
+        else:
+            if state is None:
+                raise ValueError("state argument can't be None, " + \
+                                 "if the state_dict_from_file argument is set to False")
+            else:
+                loaded_state = state
+
+
+        net_forward = partial(self.apply, loaded_state)
+        if add_jitted:
+            
+            net_forward_jitted = jax.jit(net_forward)
+        else:
+            net_forward_jitted = None
+        
+        return net_forward, net_forward_jitted
     
 class ModelTrainerJaxMLP:
     def __init__(self,
