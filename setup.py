@@ -1,10 +1,4 @@
-#from distutils.core import setup
-#from Cython.Build import cythonize
 from setuptools import setup
-from setuptools import Extension
-import numpy
-
-import setuptools
 
 setup(  
         name = 'LANfactory',
@@ -15,16 +9,10 @@ setup(
         description='Package with convenience functions to train LANs',
         install_requires= ['NumPy >= 1.17.0', 'SciPy >= 1.6.3', 'pandas >= 1.2.4', 'torch >= 1.7', 'jax >= 0.4.2', 'flax >= 0.6.4', 'optax >= 0.1.4', 'tqdm >= 4.0.0'],
         setup_requires= ['NumPy >= 1.17.0', 'SciPy >= 1.6.3', 'pandas >= 1.2.4', 'torch >= 1.7', 'jax >= 0.4.2', 'flax >= 0.6.4', 'optax >= 0.1.4', 'tqdm >= 4.0.0'],
-        include_dirs = [numpy.get_include()] ,
         classifiers=[ 'Development Status :: 1 - Planning', 
                       'Environment :: Console',
                       'License :: OSI Approved :: MIT License',
                       'Programming Language :: Python',
                       'Topic :: Scientific/Engineering'
                     ]
-
     )
-
-
-# package_data={'hddm':['examples/*.csv', 'examples/*.conf', 'keras_models/*.h5', 'cnn_models/*/*', 'simulators/*']},
-# scripts=['scripts/hddm_demo.py'],

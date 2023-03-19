@@ -1,0 +1,8 @@
+include README.md LICENSE
+include lanfactory *.py
+include notebooks/*
+include basic_tutorial_files/*
+global-exclude .git
+global-exclude *~
+global-exclude *.pyc
+global-exclude .#*
