@@ -128,18 +128,10 @@ class TorchMLP(nn.Module):
         self,
         network_config=None,
         input_shape=10,
-        save_folder=None,
-        generative_model_id="ddm",
         train_output_type="logprob",  # 'logprob', 'logits',
     ):
         super(TorchMLP, self).__init__()
-        if generative_model_id is not None:
-            self.model_id = uuid.uuid1().hex + "_" + generative_model_id
-            self.generative_model_id = generative_model_id
-        else:
-            self.model_id = None
 
-        self.save_folder = save_folder
         self.input_shape = input_shape
         self.network_config = network_config
         self.train_output_type = train_output_type
@@ -208,13 +200,12 @@ class ModelTrainerTorchMLP:
     def __init__(
         self,
         train_config=None,
-        data_loader_train=None,
-        data_loader_valid=None,
         model=None,
-        output_folder=None,
-        warm_start=False,
+        train_dl=None,
+        valid_dl=None,
         allow_abs_path_folder_generation=False,
         pin_memory=True,
+        seed=None,
     ):
         # Class to train MLP models (This is in fact not MLP specific --> rename?)
         torch.backends.cudnn.benchmark = True
@@ -224,42 +215,40 @@ class ModelTrainerTorchMLP:
         print("Torch Device: ", self.dev)
         self.train_config = train_config
         self.model = model.to(self.dev)
-        self.output_folder = output_folder + "/"
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
-        self.data_loader_train = data_loader_train
-        self.data_loader_valid = data_loader_valid
-        self.warm_start = warm_start
+        self.train_dl = train_dl
+        self.valid_dl = valid_dl
         self.pin_memory = pin_memory
 
         self.__get_loss()
         self.__get_optimizer()
         self.__load_weights()
-        try_gen_folder(
-            folder=self.output_folder,
-            allow_abs_path_folder_generation=allow_abs_path_folder_generation,
-        )  # AF-TODO import folder
 
+    def __try_wandb(
+        self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
+    ):
         try:
             wandb.init(
-                project="choicep_" + self.model.generative_model_id,
-                name="wd_"
-                + str(self.train_config["weight_decay"])
-                + "_optim_"
-                + str(self.train_config["optimizer"])
-                + "_"
-                + self.model.model_id,
-                config={
-                    "learning_rate": self.train_config["learning_rate"],
-                    "weight_decay": self.train_config["weight_decay"],
-                    "epochs": self.train_config["n_epochs"],
-                    "batch_size": self.train_config["gpu_batch_size"]
-                    if torch.cuda.is_available()
-                    else self.train_config["cpu_batch_size"],
-                    "generative_model": self.model.generative_model_id,
-                    "lr_scheduler": self.train_config["lr_scheduler"],
-                    "lr_scheduler_params": self.train_config["lr_scheduler_params"],
-                    "identifier": self.model.model_id,
-                },
+                project=wandb_project_id,
+                name=(
+                    "wd_"
+                    + str(self.train_config["weight_decay"])
+                    + "_optim_"
+                    + str(self.train_config["optimizer"])
+                    + "_"
+                    + run_id
+                ),
+                config=self.train_config,
+                # {
+                #     "learning_rate": self.train_config["learning_rate"],
+                #     "weight_decay": self.train_config["weight_decay"],
+                #     "epochs": self.train_config["n_epochs"],
+                #     "batch_size": self.train_config["batch_size"]
+                #     "file_id": file_id,
+                #     "lr_scheduler": self.train_config["lr_scheduler"],
+                #     "lr_scheduler_params": self.train_config["lr_scheduler_params"],
+                #     "run_id": run_id,
+                # },
             )
 
             wandb.config = {
@@ -341,7 +330,30 @@ class ModelTrainerTorchMLP:
         # for warmstart, not implemented at the moment
         return
 
-    def train_model(self, save_history=True, save_model=True, verbose=1):
+    def train_and_evaluate(
+        self,
+        output_folder="data/",
+        output_file_id="fileid",
+        run_id="runid",
+        wandb_on=True,
+        wandb_project_id="projectid",
+        save_history=True,
+        save_model=True,
+        save_config=True,
+        save_all=True,
+        save_data_details=True,
+        verbose=1,
+    ):
+        try_gen_folder(
+            folder=output_folder,
+            allow_abs_path_folder_generation=self.allow_abs_path_folder_generation,
+        )  # AF-TODO import folder
+
+        if wandb_on:
+            self.__try_wandb(
+                wandb_project_id=wandb_project_id, file_id=output_file_id, run_id=run_id
+            )
+
         self.training_history = pd.DataFrame(
             np.zeros((self.train_config["n_epochs"], 2)), columns=["epoch", "val_loss"]
         )
@@ -358,7 +370,7 @@ class ModelTrainerTorchMLP:
             epoch_s_t = time()
 
             # Training loop
-            for xb, yb in self.data_loader_train:
+            for xb, yb in self.train_dl:
                 # Shift data to device
                 if self.pin_memory and self.dev.__str__() == "cuda":
                     xb, yb = xb.cuda(non_blocking=True), yb.cuda(non_blocking=True)
@@ -378,7 +390,7 @@ class ModelTrainerTorchMLP:
                             epoch,
                             self.train_config["n_epochs"],
                             cnt,
-                            self.data_loader_train.__len__(),
+                            self.train_dl.__len__(),
                             loss,
                         )
                     )
@@ -388,7 +400,7 @@ class ModelTrainerTorchMLP:
                             epoch,
                             self.train_config["n_epochs"],
                             cnt,
-                            self.data_loader_train.__len__(),
+                            self.train_dl.__len__(),
                             loss,
                         )
                     )
@@ -408,9 +420,9 @@ class ModelTrainerTorchMLP:
                 val_loss = (
                     sum(
                         self.loss_fun(self.model(xb.to(self.dev)), yb.to(self.dev))
-                        for xb, yb in self.data_loader_valid
+                        for xb, yb in self.valid_dl
                     )
-                    / self.data_loader_valid.__len__()
+                    / self.valid_dl.__len__()
                 )
             print(
                 "epoch {} / {}, validation_loss: {:2.4}".format(
@@ -434,20 +446,41 @@ class ModelTrainerTorchMLP:
             except:
                 pass
 
-        if save_history == True:
+        # Saving
+        full_path = (
+            output_folder + "/" + output_file_id + "_" + self.model_type + "_" + run_id
+        )
+
+        if save_history or save_all:
             print("Saving training history")
-            pd.DataFrame(self.training_history).to_csv(
-                self.output_folder
-                + "/"
-                + self.model.model_id
-                + "_torch_training_history.csv"
-            )
-        if save_model == True:
+            training_history_path = full_path + "_torch_training_history.csv"
+            pd.DataFrame(self.training_history).to_csv(training_history_path)
+
+        if save_model or save_all:
             print("Saving model state dict")
+            train_state_path = full_path + "_train_state_dict_torch.pt"
             torch.save(
                 self.model.state_dict(),
-                self.output_folder + "/" + self.model.model_id + "_torch_state_dict.pt",
+                train_state_path,
             )
+
+        if save_config or save_all:
+            config_path = full_path + "_train_config.pickle"
+            pickle.dump(self.config, open(config_path, "wb"))
+
+        if save_data_details or save_all:
+            data_details_path = full_path + "_data_details.pickle"
+            pickle.dump(
+                {
+                    "train_data_generator_config": self.train_dl.dataset.data_generator_config,
+                    "train_datafile_ids": self.train_dl.dataet.file_ids,
+                    "valid_data_generator_config": self.valid_dl.dataset.data_generator_config,
+                    "valid_datafile_ids": self.valid_dl.dataset.file_ids,
+                },
+                open(data_details_path, "wb"),
+            )
+
+            print("Saving training data details to: " + data_details_path)
 
         # Upload wandb data
         try:

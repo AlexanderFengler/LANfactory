@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(  
         name = 'LANfactory',
-        version='0.3.0',
+        version='0.3.0dev',
         author = 'Alexander Fenger',
         url = 'https://github.com/AlexanderFengler/LANfactory',
         packages= ['lanfactory', 'lanfactory.config', 'lanfactory.trainers', 'lanfactory.utils'], # , 'ssms.basic_simulators', 'ssms.config', 'ssms.dataset_generators', 'ssms.support_utils'],

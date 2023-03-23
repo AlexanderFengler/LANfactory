@@ -60,7 +60,6 @@ generator_config['output_folder'] = 'data/lan_mlp/'
 model_config = ssms.config.model_config['angle']
 ```
 
-
 ```python
 # MAKE DATA
 

@@ -6,6 +6,9 @@ from tqdm import tqdm
 from frozendict import frozendict
 from typing import Sequence
 
+from lanfactory.utils import try_gen_folder
+from time import time
+
 import jax
 from jax import numpy as jnp
 
@@ -136,31 +139,24 @@ class MLPJax(nn.Module):
 class ModelTrainerJaxMLP:
     def __init__(
         self,
-        config=None,
+        train_config=None,
         model=None,
         train_dl=None,
-        test_dl=None,
-        wandb_on=False,
-        output_folder="data/",
-        output_file_id="none",
-        save_history=False,
-        save_model=False,
-        save_config=False,
-        save_training_data_details=False,
-        save_all=False,
-        run_id=None,
+        valid_dl=None,
+        allow_abs_path_folder_generation=False,
+        pin_memory=False,
         seed=None,
     ):
-        if not ("loss_dict" in config.keys()):
+        if not ("loss_dict" in train_config.keys()):
             self.loss_dict = {
                 "huber": {"fun": optax.huber_loss, "kwargs": {"delta": 1}},
                 "mse": {"fun": optax.l2_loss, "kwargs": {}},
                 "bcelogit": {"fun": optax.sigmoid_binary_cross_entropy, "kwargs": {}},
             }
         else:
-            self.loss_dict = config["loss_dict"]
+            self.loss_dict = train_config["loss_dict"]
 
-        if not ("lr_dict" in config.keys()):
+        if not ("lr_dict" in train_config.keys()):
             # Todo: Add more schedules (for now warmup_cosine_decay_schedule)
             self.lr_dict = {
                 "init_value": 0.0002,
@@ -169,20 +165,11 @@ class ModelTrainerJaxMLP:
                 "exponent": 1.0,  # note, exponent currently not used (needs optax update)
             }
 
-        self.config = config
+        self.train_config = train_config
         self.model = model
         self.train_dl = train_dl
-        self.test_dl = test_dl
-        self.wandb_on = wandb_on
-        self.output_folder = output_folder
-        self.output_file_id = output_file_id
-        self.save_history = save_history
-        self.save_model = save_model
-        self.save_config = save_config
-        self.save_training_data_details = save_training_data_details
-        self.save_all = save_all
+        self.valid_dl = valid_dl
         self.seed = seed
-        self.run_id = run_id
 
         self.__get_loss()
         self.apply_model_train = self.__make_apply_model(train=True)
@@ -196,8 +183,8 @@ class ModelTrainerJaxMLP:
 
     def __get_loss(self):
         self.loss = partial(
-            self.loss_dict[self.config["loss"]]["fun"],
-            **self.loss_dict[self.config["loss"]]["kwargs"]
+            self.loss_dict[self.train_config["loss"]]["fun"],
+            **self.loss_dict[self.train_config["loss"]]["kwargs"]
         )
 
     def __make_apply_model(self, train=True):
@@ -226,18 +213,39 @@ class ModelTrainerJaxMLP:
 
         return update_model
 
+    def __try_wandb(
+        self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
+    ):
+        # Initialize wandb
+        if self.wandb_on:
+            try:
+                wandb.init(
+                    project=wandb_project_id,
+                    name=(
+                        "wd_"
+                        + str(self.train_config["weight_decay"])
+                        + "_optim_"
+                        + str(self.train_config["optimizer"])
+                        + "_"
+                        + run_id
+                    ),
+                    config=self.train_config,
+                )
+            except:
+                print("No wandb found, proceeding without logging")
+
     def create_train_state(self, rng):
         params = self.model.init(
             rng, jnp.ones((1, self.train_dl.dataset.input_dim))
-        )  # self.config['input_size'])))
+        )  # self.train_config['input_size'])))
         lr_schedule = optax.warmup_cosine_decay_schedule(
             init_value=self.lr_dict["init_value"],
             peak_value=self.lr_dict["peak_value"],
             warmup_steps=self.train_dl.dataset.__len__(),
-            decay_steps=self.train_dl.dataset.__len__() * self.config["n_epochs"],
+            decay_steps=self.train_dl.dataset.__len__() * self.train_config["n_epochs"],
             end_value=self.lr_dict["end_value"],
         )
-        # tx = optax.adam(learning_rate = self.config['learning_rate'])
+        # tx = optax.adam(learning_rate = self.train_config['learning_rate'])
         tx = optax.adam(learning_rate=lr_schedule)
         return train_state.TrainState.create(
             apply_fn=self.model.apply, params=params, tx=tx
@@ -247,7 +255,7 @@ class ModelTrainerJaxMLP:
         if train:
             tmp_dataloader = self.train_dl
         else:
-            tmp_dataloader = self.test_dl
+            tmp_dataloader = self.valid_dl
 
         epoch_loss = []
         for X, y in tqdm(tmp_dataloader):
@@ -271,33 +279,32 @@ class ModelTrainerJaxMLP:
         mean_epoch_loss = np.mean(epoch_loss)
         return state, mean_epoch_loss
 
-    def train_and_evaluate(self):
-        # Initialize wandb
-        if self.wandb_on:
-            try:
-                wandb.init(
-                    project="jax_lan",
-                    name="test_oscar",
-                    config={
-                        "learning_rate": config["learning_rate"],
-                        "epochs": config["n_epochs"],
-                        "layer_sizes": config["layer_sizes"],
-                    },
-                )
-            except:
-                print("No wandb found, proceeding without logging")
-
-        # Assign run identifier:
-        if self.run_id == None:
-            self.run_id = "noid"
+    def train_and_evaluate(
+        self,
+        output_folder="data/",
+        output_file_id="fileid",
+        run_id="runid",
+        wandb_on=True,
+        wandb_project_id="projectid",
+        save_history=True,
+        save_model=True,
+        save_config=True,
+        save_all=True,
+        save_data_details=True,
+        verbose=1,
+    ):
+        if wandb_on:
+            self.__try_wandb(
+                wandb_project_id=wandb_project_id, file_id=output_file_id, run_id=run_id
+            )
 
         # Identify network type:
         if self.model.train_output_type == "logprob":
-            self.model_type = "lan"
+            model_type = "lan"
         elif self.model.train_output_type == "logits":
-            self.model_type = "cpn"
+            model_type = "cpn"
         else:
-            self.model_type = "unknown"
+            model_type = "unknown"
             print(
                 'Model type identified as "unknown" because the training_output_type attribute'
                 + ' of the supplied jax model is neither "logprob", nor "logits"'
@@ -305,7 +312,7 @@ class ModelTrainerJaxMLP:
 
         # Initialize Training history
         training_history = pd.DataFrame(
-            np.zeros((self.config["n_epochs"], 2)), columns=["epoch", "val_loss"]
+            np.zeros((self.train_config["n_epochs"], 2)), columns=["epoch", "val_loss"]
         )
 
         # Initialize network
@@ -321,7 +328,7 @@ class ModelTrainerJaxMLP:
         state = self.create_train_state(init_rng)
 
         # Training loop over epochs
-        for epoch in range(self.config["n_epochs"]):
+        for epoch in range(self.train_config["n_epochs"]):
             state, train_loss = self.run_epoch(state, train=True)
             state, test_loss = self.run_epoch(state, train=False)
 
@@ -330,7 +337,7 @@ class ModelTrainerJaxMLP:
 
             print(
                 "Epoch: {} / {}, test_loss: {}".format(
-                    epoch, self.config["n_epochs"], test_loss
+                    epoch, self.train_config["n_epochs"], test_loss
                 )
             )
 
@@ -340,21 +347,15 @@ class ModelTrainerJaxMLP:
 
         # Saving
         full_path = (
-            self.output_folder
-            + "/"
-            + self.output_file_id
-            + "_"
-            + self.model_type
-            + "_"
-            + self.run_id
+            output_folder + "/" + output_file_id + "_" + model_type + "_" + run_id
         )
 
-        if self.save_history or self.save_all:
+        if save_history or save_all:
             training_history_path = full_path + "_jax_training_history.csv"
             training_history.to_csv(training_history_path)
             print("Saving training history to: " + training_history_path)
 
-        if self.save_model or self.save_all:
+        if save_model or save_all:
             # Serialize parameter state
             byte_output = flax.serialization.to_bytes(state.params)
 
@@ -365,20 +366,22 @@ class ModelTrainerJaxMLP:
             file.close()
             print("Saving model parameters to: " + train_state_path)
 
-        if self.save_config or self.save_all:
+        if save_config or save_all:
             config_path = full_path + "_train_config.pickle"
-            pickle.dump(self.config, open(config_path, "wb"))
+            pickle.dump(self.train_config, open(config_path, "wb"))
             print("Saving training config to: " + config_path)
 
-        if self.save_training_data_details or self.save_all:
-            training_data_details_path = full_path + "_training_data_details.pickle"
+        if save_data_details or save_all:
+            data_details_path = full_path + "data_details.pickle"
             pickle.dump(
                 {
-                    "data_generator_config": self.train_dl.dataset.data_generator_config,
-                    "data_file_ids": self.train_dl.dataset.file_ids,
+                    "train_data_generator_config": self.train_dl.dataset.data_generator_config,
+                    "train_data_file_ids": self.train_dl.dataset.file_ids,
+                    "valid_data_generator_config": self.valid_dl.dataset.data_generator_config,
+                    "valid_data_file_ids": self.valid_dl.dataset.file_ids,
                 },
-                open(training_data_details_path, "wb"),
+                open(data_details_path, "wb"),
             )
-            print("Saving training data details to: " + training_data_details_path)
+            print("Saving training data details to: " + data_details_path)
 
         return state
