@@ -175,6 +175,8 @@ class ModelTrainerJaxMLP:
         self.train_dl = train_dl
         self.valid_dl = valid_dl
         self.seed = seed
+        self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
+
 
         self.__get_loss()
         self.apply_model_train = self.__make_apply_model(train=True)
