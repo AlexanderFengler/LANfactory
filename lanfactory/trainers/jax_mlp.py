@@ -149,7 +149,7 @@ class ModelTrainerJaxMLP:
         train_dl=None,
         valid_dl=None,
         allow_abs_path_folder_generation=False,
-        pin_memory=False
+        pin_memory=False,
         seed=None,
     ):
         if not ("loss_dict" in train_config.keys()):
