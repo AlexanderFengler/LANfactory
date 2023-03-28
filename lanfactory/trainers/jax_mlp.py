@@ -29,8 +29,7 @@ def MLPJaxFactory(network_config={}, train=True):
         activations=network_config["activations"],
         train_output_type=network_config["train_output_type"],
         train=train,
-    )
-
+        )
 
 class MLPJax(nn.Module):
     layer_sizes: Sequence[int] = (100, 90, 80, 1)
@@ -41,6 +40,9 @@ class MLPJax(nn.Module):
         {"relu": nn.relu, "tanh": nn.tanh, "sigmoid": nn.sigmoid}
     )
 
+    # Define network type
+    network_type = "lan" if train_output_type == "logprob" else "cpn"
+
     def setup(self):
         # TODO: Warn if unknown activation string used
         # TODO: Warn if linear activation is used before final layer
@@ -50,6 +52,9 @@ class MLPJax(nn.Module):
             for activation in self.activations
             if (activation != "linear")
         ]
+
+        # Identification
+        #self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
 
     def __call__(self, inputs):
         x = inputs
@@ -293,6 +298,12 @@ class ModelTrainerJaxMLP:
         save_data_details=True,
         verbose=1,
     ):
+        
+        try_gen_folder(
+            folder=output_folder,
+            allow_abs_path_folder_generation=self.allow_abs_path_folder_generation,
+            )  # AF-TODO import folder
+
         if wandb_on:
             self.__try_wandb(
                 wandb_project_id=wandb_project_id, file_id=output_file_id, run_id=run_id
@@ -300,11 +311,11 @@ class ModelTrainerJaxMLP:
 
         # Identify network type:
         if self.model.train_output_type == "logprob":
-            model_type = "lan"
+            network_type = "lan"
         elif self.model.train_output_type == "logits":
-            model_type = "cpn"
+            network_type = "cpn"
         else:
-            model_type = "unknown"
+            network_type = "unknown"
             print(
                 'Model type identified as "unknown" because the training_output_type attribute'
                 + ' of the supplied jax model is neither "logprob", nor "logits"'
@@ -347,7 +358,7 @@ class ModelTrainerJaxMLP:
 
         # Saving
         full_path = (
-            output_folder + "/" + output_file_id + "_" + model_type + "_" + run_id
+            output_folder + "/" + output_file_id + "_" + network_type + "_" + run_id
         )
 
         if save_history or save_all:
