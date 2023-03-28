@@ -149,7 +149,7 @@ class ModelTrainerJaxMLP:
         train_dl=None,
         valid_dl=None,
         allow_abs_path_folder_generation=False,
-        pin_memory=False,
+        pin_memory=False
         seed=None,
     ):
         if not ("loss_dict" in train_config.keys()):
@@ -223,23 +223,21 @@ class ModelTrainerJaxMLP:
     def __try_wandb(
         self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
     ):
-        # Initialize wandb
-        if self.wandb_on:
-            try:
-                wandb.init(
-                    project=wandb_project_id,
-                    name=(
-                        "wd_"
-                        + str(self.train_config["weight_decay"])
-                        + "_optim_"
-                        + str(self.train_config["optimizer"])
-                        + "_"
-                        + run_id
-                    ),
-                    config=self.train_config,
-                )
-            except:
-                print("No wandb found, proceeding without logging")
+        try:
+            wandb.init(
+                project=wandb_project_id,
+                name=(
+                    "wd_"
+                    + str(self.train_config["weight_decay"])
+                    + "_optim_"
+                    + str(self.train_config["optimizer"])
+                    + "_"
+                    + run_id
+                ),
+                config=self.train_config,
+            )
+        except:
+            print("No wandb found, proceeding without logging")
 
     def create_train_state(self, rng):
         params = self.model.init(
