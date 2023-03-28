@@ -174,6 +174,10 @@ class ModelTrainerJaxMLP:
         self.model = model
         self.train_dl = train_dl
         self.valid_dl = valid_dl
+        self.pin_memory = pin_memory
+        
+        if seed is None:
+            self.seed = int(np.random.choice(4000000000))
         self.seed = seed
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
 
