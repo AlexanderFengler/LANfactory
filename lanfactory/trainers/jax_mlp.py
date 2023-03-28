@@ -181,6 +181,7 @@ class ModelTrainerJaxMLP:
         else:
             self.seed = seed
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
+        self.wandb_on = 0
 
 
         self.__get_loss()
@@ -241,6 +242,7 @@ class ModelTrainerJaxMLP:
                 ),
                 config=self.train_config,
             )
+            self.wandb_on = 1
         except:
             print("No wandb found, proceeding without logging")
 
