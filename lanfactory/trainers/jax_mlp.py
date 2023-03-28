@@ -178,7 +178,8 @@ class ModelTrainerJaxMLP:
         
         if seed is None:
             self.seed = int(np.random.choice(4000000000))
-        self.seed = seed
+        else:
+            self.seed = seed
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
 
 
