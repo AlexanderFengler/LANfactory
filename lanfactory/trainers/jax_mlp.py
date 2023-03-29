@@ -390,7 +390,7 @@ class ModelTrainerJaxMLP:
             print("Saving training config to: " + config_path)
 
         if save_data_details or save_all:
-            data_details_path = full_path + "data_details.pickle"
+            data_details_path = full_path + "_data_details.pickle"
             pickle.dump(
                 {
                     "train_data_generator_config": self.train_dl.dataset.data_generator_config,
