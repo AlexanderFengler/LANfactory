@@ -474,6 +474,7 @@ class ModelTrainerTorchMLP:
             print("Saving training history")
             training_history_path = full_path + "_torch_training_history.csv"
             pd.DataFrame(training_history).to_csv(training_history_path)
+            print("Saving training history to: " + training_history_path)
 
         if save_model or save_all:
             print("Saving model state dict")
@@ -482,10 +483,13 @@ class ModelTrainerTorchMLP:
                 self.model.state_dict(),
                 train_state_path,
             )
+            print("Saving model parameters to: " + train_state_path)
+
 
         if save_config or save_all:
             config_path = full_path + "_train_config.pickle"
-            pickle.dump(self.config, open(config_path, "wb"))
+            pickle.dump(self.train_config, open(config_path, "wb"))
+            print("Saving training config to: " + config_path)
 
         if save_data_details or save_all:
             data_details_path = full_path + "_data_details.pickle"
