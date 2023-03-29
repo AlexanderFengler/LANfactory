@@ -496,7 +496,7 @@ class ModelTrainerTorchMLP:
             pickle.dump(
                 {
                     "train_data_generator_config": self.train_dl.dataset.data_generator_config,
-                    "train_datafile_ids": self.train_dl.dataet.file_ids,
+                    "train_datafile_ids": self.train_dl.dataset.file_ids,
                     "valid_data_generator_config": self.valid_dl.dataset.data_generator_config,
                     "valid_datafile_ids": self.valid_dl.dataset.file_ids,
                 },
@@ -513,7 +513,6 @@ class ModelTrainerTorchMLP:
             pass
 
         print("Training finished successfully...")
-
 
 class LoadTorchMLPInfer:
     def __init__(self, model_file_path=None, network_config=None, input_dim=None):
