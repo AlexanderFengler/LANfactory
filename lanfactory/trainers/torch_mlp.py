@@ -128,13 +128,20 @@ class TorchMLP(nn.Module):
         self,
         network_config=None,
         input_shape=10,
-        train_output_type="logprob",  # 'logprob', 'logits',
-    ):
+        **kwargs,
+        ):
         super(TorchMLP, self).__init__()
 
         self.input_shape = input_shape
         self.network_config = network_config
-        self.train_output_type = train_output_type
+        
+        if 'train_output_type' in self.network_config.keys():
+            self.train_output_type = self.network_config['train_output_type']
+        else:
+            self.train_output_type = 'logprob'
+
+        self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
+
         self.activations = {
             "relu": torch.nn.ReLU(),
             "tanh": torch.nn.Tanh(),
@@ -194,7 +201,6 @@ class TorchMLP(nn.Module):
             )  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
         else:
             return self.layers[-1](x)
-
 
 class ModelTrainerTorchMLP:
     def __init__(
