@@ -257,15 +257,15 @@ class ModelTrainerTorchMLP:
                 # },
             )
 
-            wandb.config = {
-                "learning_rate": self.train_config["learning_rate"],
-                "weight_decay": self.train_config["weight_decay"],
-                "epochs": self.train_config["n_epochs"],
-                "batch_size": self.train_config["gpu_batch_size"]
-                if torch.cuda.is_available()
-                else self.train_config["cpu_batch_size"],
-                "model_id": self.model.model_id,
-            }
+            # wandb.config = {
+            #     "learning_rate": self.train_config["learning_rate"],
+            #     "weight_decay": self.train_config["weight_decay"],
+            #     "epochs": self.train_config["n_epochs"],
+            #     "batch_size": self.train_config["gpu_batch_size"]
+            #     if torch.cuda.is_available()
+            #     else self.train_config["cpu_batch_size"],
+            #     "model_id": self.model.model_id,
+            # }
 
             print("Succefully initialized wandb!")
         except:

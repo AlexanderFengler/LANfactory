@@ -263,14 +263,20 @@ class ModelTrainerJaxMLP:
             apply_fn=self.model.apply, params=params, tx=tx
         )
 
-    def run_epoch(self, state, train=True):
+    def run_epoch(self, state, train=True, verbose=1):
         if train:
             tmp_dataloader = self.train_dl
+            train_str = "Training"
         else:
             tmp_dataloader = self.valid_dl
+            train_str = "Validation"
 
         epoch_loss = []
-        for X, y in tqdm(tmp_dataloader):
+        
+        cnt_max = tmp_dataloader.__len__() # total steps per epoch
+        
+        # Run training for one epoch
+        for X, y in tmp_dataloader:
             X_jax = jnp.array(X)
             y_jax = jnp.array(y)
             if train:
@@ -280,13 +286,37 @@ class ModelTrainerJaxMLP:
                 loss = self.apply_model_eval(state, X_jax, y_jax)
 
             epoch_loss.append(loss)
-
+            
+            # Log wandb and print progress if verbose
             if (int(state.step) % 100) == 0:
                 if self.wandb_on:
                     try:
                         wandb.log({"loss": loss}, step=int(state.step))
                     except:
                         pass
+                if verbose == 2:
+                    print(
+                        train_str 
+                        + " - Step: "
+                        + str(int(state.step))
+                        + " of "
+                        + str(cnt_max)
+                        + " - Loss: "
+                        + str(loss)
+                    )
+                elif verbose == 1:
+                    if (int(state.step) % 1000) == 0:
+                        print(
+                            train_str 
+                            + " - Step: "
+                            + str(int(state.step))
+                            + " of "
+                            + str(cnt_max)
+                            + " - Loss: "
+                            + str(loss)
+                        )
+                else:
+                    pass
 
         mean_epoch_loss = np.mean(epoch_loss)
         return state, mean_epoch_loss
@@ -347,8 +377,9 @@ class ModelTrainerJaxMLP:
 
         # Training loop over epochs
         for epoch in range(self.train_config["n_epochs"]):
-            state, train_loss = self.run_epoch(state, train=True)
-            state, test_loss = self.run_epoch(state, train=False)
+            print("Epoch: " + str(epoch) + " of " + str(self.train_config["n_epochs"]))
+            state, train_loss = self.run_epoch(state, train=True, verbose=verbose)
+            state, test_loss = self.run_epoch(state, train=False, verbose=verbose)
 
             # Collect loss in training history
             training_history.values[epoch, :] = [int(epoch), float(test_loss)]
