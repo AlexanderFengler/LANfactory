@@ -278,7 +278,7 @@ class ModelTrainerJaxMLP:
         cnt_max = tmp_dataloader.__len__() # total steps per epoch
         
         # Run training for one epoch
-        start_time = time.time()
+        start_time = time()
         for X, y in tmp_dataloader:
             X_jax = jnp.array(X)
             y_jax = jnp.array(y)
