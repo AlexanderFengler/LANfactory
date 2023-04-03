@@ -321,7 +321,7 @@ class ModelTrainerJaxMLP:
                 else:
                     pass
         
-        end_time = time.time()
+        end_time = time()
         print("Epoch time: ", end_time - start_time, "s")
 
         mean_epoch_loss = np.mean(epoch_loss)
