@@ -259,13 +259,12 @@ class ModelTrainerJaxMLP:
             decay_steps=self.train_dl.dataset.__len__() * self.train_config["n_epochs"],
             end_value=self.lr_dict["end_value"],
         )
-        # tx = optax.adam(learning_rate = self.train_config['learning_rate'])
         tx = optax.adam(learning_rate=lr_schedule)
         return train_state.TrainState.create(
             apply_fn=self.model.apply, params=params, tx=tx
         )
 
-    def run_epoch(self, state, train=True, verbose=1):
+    def run_epoch(self, state, train=True, verbose=1, epoch=0, max_epochs=0):
         if train:
             tmp_dataloader = self.train_dl
             train_str = "Training"
@@ -279,9 +278,11 @@ class ModelTrainerJaxMLP:
         
         # Run training for one epoch
         start_time = time()
+        step = 0
         for X, y in tmp_dataloader:
             X_jax = jnp.array(X)
             y_jax = jnp.array(y)
+            
             if train:
                 grads, loss = self.apply_model_train(state, X_jax, y_jax)
                 state = self.update_model(state, grads)
@@ -291,7 +292,7 @@ class ModelTrainerJaxMLP:
             epoch_loss.append(loss)
             
             # Log wandb and print progress if verbose
-            if (int(state.step) % 100) == 0:
+            if (step % 100) == 0:
                 if self.wandb_on:
                     try:
                         wandb.log({"loss": loss}, step=int(state.step))
@@ -301,18 +302,18 @@ class ModelTrainerJaxMLP:
                     print(
                         train_str 
                         + " - Step: "
-                        + str(int(state.step))
+                        + str(step)
                         + " of "
                         + str(cnt_max)
                         + " - Loss: "
                         + str(loss)
                     )
                 elif verbose == 1:
-                    if (int(state.step) % 1000) == 0:
+                    if (step % 1000) == 0:
                         print(
                             train_str 
                             + " - Step: "
-                            + str(int(state.step))
+                            + str(step)
                             + " of "
                             + str(cnt_max)
                             + " - Loss: "
@@ -320,9 +321,18 @@ class ModelTrainerJaxMLP:
                         )
                 else:
                     pass
+
+            step += 1
         
         end_time = time()
-        print("Epoch time: ", end_time - start_time, "s")
+        print("Epoch " 
+              + str(epoch) 
+              + "/" 
+              + str(max_epochs) 
+              + " time: " 
+              + str(end_time- start_time)
+              + "s"
+             )
 
         mean_epoch_loss = np.mean(epoch_loss)
         return state, mean_epoch_loss
@@ -384,8 +394,17 @@ class ModelTrainerJaxMLP:
         # Training loop over epochs
         for epoch in range(self.train_config["n_epochs"]):
             print("Epoch: " + str(epoch) + " of " + str(self.train_config["n_epochs"]))
-            state, train_loss = self.run_epoch(state, train=True, verbose=verbose)
-            state, test_loss = self.run_epoch(state, train=False, verbose=verbose)
+            state, train_loss = self.run_epoch(state, 
+                                               train=True, 
+                                               verbose=verbose, 
+                                               epoch=epoch, 
+                                               max_epochs=self.train_config["n_epochs"])
+            
+            state, test_loss = self.run_epoch(state, 
+                                              train=False, 
+                                              verbose=verbose,
+                                              epoch=epoch,
+                                              max_epochs=self.train_config["n_epochs"])
 
             # Collect loss in training history
             training_history.values[epoch, :] = [int(epoch), float(test_loss)]
