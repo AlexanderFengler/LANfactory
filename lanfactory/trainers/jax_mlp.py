@@ -17,6 +17,8 @@ from flax.training import train_state
 from flax import linen as nn
 import optax
 
+from time import time
+
 try:
     import wandb
 except:
@@ -276,6 +278,7 @@ class ModelTrainerJaxMLP:
         cnt_max = tmp_dataloader.__len__() # total steps per epoch
         
         # Run training for one epoch
+        start_time = time.time()
         for X, y in tmp_dataloader:
             X_jax = jnp.array(X)
             y_jax = jnp.array(y)
@@ -317,6 +320,9 @@ class ModelTrainerJaxMLP:
                         )
                 else:
                     pass
+        
+        end_time = time.time()
+        print("Epoch time: ", end_time - start_time, "s")
 
         mean_epoch_loss = np.mean(epoch_loss)
         return state, mean_epoch_loss
