@@ -420,8 +420,7 @@ class ModelTrainerJaxMLP:
         self.state = state
 
         # Saving
-        full_path = (
-            output_folder + "/" + output_file_id + "_" + network_type + "_" + run_id
+        full_path = (output_folder + "/" + run_id + "_" + network_type + "_" + output_file_id + "_"
         )
 
         if save_history or save_all:
