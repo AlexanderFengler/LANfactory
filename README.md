@@ -225,8 +225,6 @@ network = lanfactory.trainers.LoadTorchMLPInfer(model_file_path = network_file_p
 
 ```python
 
-This onnx file can be used directly with the [`HSSM`](https://github.com/lnccbrown/HSSM) package. 
-
 # Two ways to call the network
 
 # Direct call --> need tensor input
@@ -320,6 +318,7 @@ For example:
 ```
 python onnx/transform_onnx.py '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch__network_config.pickle' '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch_state_dict.pt' 11 'lca_no_bias_4_torch.onnx'
 ```
+This onnx file can be used directly with the [`HSSM`](https://github.com/lnccbrown/HSSM) package. 
 
 We hope this package may be helpful in case you attempt to train [LANs](https://elifesciences.org/articles/65074) for your own research.
 
