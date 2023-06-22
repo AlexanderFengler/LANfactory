@@ -224,6 +224,9 @@ network = lanfactory.trainers.LoadTorchMLPInfer(model_file_path = network_file_p
 
 
 ```python
+
+This onnx file can be used directly with the [`HSSM`](https://github.com/lnccbrown/HSSM) package. 
+
 # Two ways to call the network
 
 # Direct call --> need tensor input
