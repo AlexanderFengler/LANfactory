@@ -224,6 +224,7 @@ network = lanfactory.trainers.LoadTorchMLPInfer(model_file_path = network_file_p
 
 
 ```python
+
 # Two ways to call the network
 
 # Direct call --> need tensor input
@@ -294,8 +295,30 @@ plt.ylabel('likelihod')
 
     
 ![png](basic_tutorial_files/basic_tutorial_22_1.png)
-    
 
+
+    
+### TorchMLP to ONNX Converter
+
+The `transform_onnx.py` script converts a TorchMLP model to the ONNX format. It takes a network configuration file (in pickle format), a state dictionary file (Torch model weights), the size of the input tensor, and the desired output ONNX file path.
+
+### Usage
+
+```python onnx/transform_onnx.py <network_config_file> <state_dict_file> <input_shape> <output_onnx_file>```
+
+Replace the placeholders with the appropriate values:
+
+- <network_config_file>: Path to the pickle file containing the network configuration.
+- <state_dict_file>: Path to the file containing the state dictionary of the model.
+- <input_shape>: The size of the input tensor for the model (integer).
+- <output_onnx_file>: Path to the output ONNX file.
+
+For example:
+
+```
+python onnx/transform_onnx.py '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch__network_config.pickle' '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch_state_dict.pt' 11 'lca_no_bias_4_torch.onnx'
+```
+This onnx file can be used directly with the [`HSSM`](https://github.com/lnccbrown/HSSM) package. 
 
 We hope this package may be helpful in case you attempt to train [LANs](https://elifesciences.org/articles/65074) for your own research.
 
