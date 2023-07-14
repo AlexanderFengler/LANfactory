@@ -304,7 +304,12 @@ The `transform_onnx.py` script converts a TorchMLP model to the ONNX format. It 
 
 ### Usage
 
-```python onnx/transform_onnx.py <network_config_file> <state_dict_file> <input_shape> <output_onnx_file>```
+```
+from lanfactory.onnx.transform_onnx import transform_to_onnx
+
+transform_to_onnx(<network_config_file>, <state_dict_file>, <input_shape>, <output_onnx_file>)
+
+```
 
 Replace the placeholders with the appropriate values:
 
@@ -316,7 +321,7 @@ Replace the placeholders with the appropriate values:
 For example:
 
 ```
-python onnx/transform_onnx.py '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch__network_config.pickle' '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch_state_dict.pt' 11 'lca_no_bias_4_torch.onnx'
+transform_to_onnx('0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch__network_config.pickle', '0d9f0e94175b11eca9e93cecef057438_lca_no_bias_4_torch_state_dict.pt', 11,'lca_no_bias_4_torch.onnx')
 ```
 This onnx file can be used directly with the [`HSSM`](https://github.com/lnccbrown/HSSM) package. 
 
