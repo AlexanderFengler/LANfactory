@@ -1,6 +1,5 @@
 import pickle
 from typing import Any
-import argparse
 
 import torch
 from lanfactory.trainers.torch_mlp import TorchMLP
@@ -35,21 +34,3 @@ def transform_to_onnx(
 
     x = torch.randn(1, input_shape, requires_grad=True)
     torch.onnx.export(mynet, x, output_onnx_file)
-
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert a TorchMLP model to ONNX format.")
-    parser.add_argument("network_config_file", help="Path to the network configuration file (pickle).")
-    parser.add_argument("state_dict_file", help="Path to the state dictionary file.")
-    parser.add_argument("input_shape", type=int, help="Size of the input tensor for the model.")
-    parser.add_argument("output_onnx_file", help="Path to the output ONNX file.")
-
-    args = parser.parse_args()
-
-    transform_to_onnx(
-        args.network_config_file,
-        args.state_dict_file,
-        args.input_shape,
-        args.output_onnx_file,
-    )
