@@ -22,8 +22,22 @@ try:
 except ImportError:
     print("wandb not available")
 
+"""This module contains the JaxMLP class and the ModelTrainerJaxMLP class which 
+   are used to train Jax based LANs and CPNs.
+"""
 
 def MLPJaxFactory(network_config={}, train=True):
+    """Factory function to create a MLPJax object.
+    Arguments
+    ---------
+        network_config (dict): 
+            Dictionary containing the network configuration.
+        train (bool): 
+            Whether the model should be trained or not.
+    Returns
+    -------
+        MLPJax class initialized with the correct network configuration.
+    """
     return MLPJax(
         layer_sizes=network_config["layer_sizes"],
         activations=network_config["activations"],
@@ -31,8 +45,20 @@ def MLPJaxFactory(network_config={}, train=True):
         train=train,
     )
 
-
 class MLPJax(nn.Module):
+    """JaxMLP class.
+    Arguments
+    ---------
+        layer_sizes (Sequence[int]): 
+            Sequence of integers containing the sizes of the layers.
+        activations (Sequence[str]):
+            Sequence of strings containing the activation functions.
+        train (bool):
+            Whether the model should be set to training mode or not.
+        train_output_type (str):
+            The output type of the model during training.
+    """    
+
     layer_sizes: Sequence[int] = (100, 90, 80, 1)
     activations: Sequence[str] = ("tanh", "tanh", "tanh", "linear")
     train: bool = True
@@ -47,6 +73,9 @@ class MLPJax(nn.Module):
     network_type = "lan" if train_output_type == "logprob" else "cpn"
 
     def setup(self):
+        """Setup function for the JaxMLP class. 
+        Initializes the layers and activation functions.
+        """
         # TODO: Warn if unknown activation string used
         # TODO: Warn if linear activation is used before final layer
         self.layers = [nn.Dense(layer_size) for layer_size in self.layer_sizes]
@@ -60,6 +89,18 @@ class MLPJax(nn.Module):
         # self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
 
     def __call__(self, inputs):
+        """Call function for the JaxMLP class.
+        Performs forward pass through the network.
+
+        Arguments
+        ---------
+            inputs (jax.numpy.ndarray):
+                Input tensor.
+        Returns
+        -------
+            jax.numpy.ndarray:
+                Output tensor.
+        """
         x = inputs
 
         for i, lyr in enumerate(self.layers):
@@ -82,6 +123,23 @@ class MLPJax(nn.Module):
         return x
 
     def load_state_from_file(self, seed=42, input_dim=6, file_path=None):
+        """Loads the state dictionary from a file.
+
+        Arguments
+        ---------
+            seed (int):
+                Seed for the random number generator.
+            input_dim (int):
+                Dimension of the input tensor.
+            file_path (str):
+                Path to the file containing the state dictionary.
+
+        Returns
+        -------
+            flax.core.frozen_dict.FrozenDict:
+                The state dictionary.
+        """
+
         if file_path is None:
             raise ValueError(
                 "file_path argument needs to be speficied! "
@@ -117,6 +175,29 @@ class MLPJax(nn.Module):
         file_path=None,
         add_jitted=False,
     ):
+        """Creates a partial function for the forward pass of the network.
+
+        Arguments
+        ---------
+            seed (int):
+                Seed for the random number generator.
+            input_dim (int):
+                Dimension of the input tensor.
+            state_dict_from_file (bool):
+                Whether the state dictionary should be loaded from a file or not.
+            state (flax.core.frozen_dict.FrozenDict):
+                The state dictionary (if not loaded from file).
+            file_path (str):
+                Path to the file containing the state dictionary (if loaded from file).
+            add_jitted (bool):
+                Whether the partial function should be jitted or not.
+        
+        Returns
+        -------
+            Callable:
+                The partial function for the forward pass of the network.
+        """
+
         if state_dict_from_file:
             if file_path is None:
                 raise ValueError(
@@ -156,6 +237,31 @@ class ModelTrainerJaxMLP:
         pin_memory=False,
         seed=None,
     ):
+        """Class for training JaxMLP models.
+
+        Arguments
+        ---------
+            train_config (dict):
+                Dictionary containing the training configuration.
+            model (MLPJax):
+                The MLPJax model to be trained.
+            train_dl (torch.utils.data.DataLoader):
+                The training data loader.
+            valid_dl (torch.utils.data.DataLoader):
+                The validation data loader.
+            allow_abs_path_folder_generation (bool):
+                Whether the folder for the output files should be created or not.
+            pin_memory (bool):
+                Whether the data loader should pin memory or not.
+            seed (int):
+                Seed for the random number generator.
+
+        Returns
+        -------
+            ModelTrainerJaxMLP:
+                The ModelTrainerJaxMLP object.
+
+        """
         if "loss_dict" not in train_config.keys():
             self.loss_dict = {
                 "huber": {"fun": optax.huber_loss, "kwargs": {"delta": 1}},
@@ -198,12 +304,14 @@ class ModelTrainerJaxMLP:
         self.state = "Please run training for this attribute to be specified!"
 
     def __get_loss(self):
+        """Define loss function."""
         self.loss = partial(
             self.loss_dict[self.train_config["loss"]]["fun"],
             **self.loss_dict[self.train_config["loss"]]["kwargs"],
         )
 
     def __make_apply_model(self, train=True):
+        """Compile forward pass with loss aplication"""
         @jax.jit
         def apply_model_core(state, features, labels):
             def loss_fn(params):
@@ -223,6 +331,7 @@ class ModelTrainerJaxMLP:
         return apply_model_core
 
     def __make_update_model(self):
+        """Compile gradient application"""
         @jax.jit
         def update_model(state, grads):
             return state.apply_gradients(grads=grads)
@@ -232,6 +341,18 @@ class ModelTrainerJaxMLP:
     def __try_wandb(
         self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
     ):
+        """Helper function to initialize wandb
+        
+        Arguments
+        ---------
+            wandb_project_id (str):
+                The wandb project id.
+            file_id (str):
+                The file id.
+            run_id (str):
+                The run id.
+                
+        """
         try:
             wandb.init(
                 project=wandb_project_id,
@@ -250,6 +371,7 @@ class ModelTrainerJaxMLP:
             print("No wandb found, proceeding without logging")
 
     def create_train_state(self, rng):
+        """Create initial train state"""
         params = self.model.init(
             rng, jnp.ones((1, self.train_dl.dataset.input_dim))
         )  # self.train_config['input_size'])))
@@ -266,6 +388,25 @@ class ModelTrainerJaxMLP:
         )
 
     def run_epoch(self, state, train=True, verbose=1, epoch=0, max_epochs=0):
+        """Run one epoch of training or validation
+        Arguments
+        ---------
+            state (flax.core.frozen_dict.FrozenDict):
+                The state dictionary.
+            train (bool):
+                Whether the model should is in training mode or not.
+            verbose (int):
+                The verbosity level.
+            epoch (int):
+                The current epoch.
+            max_epochs (int):
+                The maximum number of epochs.
+                
+        Returns
+        -------
+            tuple (flax.core.frozen_dict.FrozenDict, float):
+                The state dictionary and the mean epoch loss.
+        """
         if train:
             tmp_dataloader = self.train_dl
             train_str = "Training"
@@ -353,6 +494,37 @@ class ModelTrainerJaxMLP:
         save_data_details=True,
         verbose=1,
     ):
+        """Train and evaluate JAXMLP model.
+    Arguments
+    ---------
+
+        output_folder (str):
+            Path to the output folder.
+        output_file_id (str):
+            The file id.
+        run_id (str):
+            The run id.
+        wandb_on (bool):
+            Whether to use wandb or not.
+        wandb_project_id (str):
+            Project id for wandb.
+        save_history (bool):
+            Whether to save the training history or not.
+        save_model (bool):
+            Whether to save the model or not.
+        save_config (bool):
+            Whether to save the training configuration or not.
+        save_all (bool):
+            Whether to save all files or not.
+        save_data_details (bool):
+            Whether to save the data details or not.
+        verbose (int):
+            The verbosity level.
+    Returns
+    -------
+        flax.core.frozen_dict.FrozenDict:
+            The final state dictionary (model state).
+    """
         try_gen_folder(
             folder=output_folder,
             allow_abs_path_folder_generation=self.allow_abs_path_folder_generation,
