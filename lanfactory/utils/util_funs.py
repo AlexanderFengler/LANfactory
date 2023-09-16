@@ -1,5 +1,6 @@
 import os
 import pickle
+import warnings
 
 
 def try_gen_folder(folder=None, allow_abs_path_folder_generation=True):
@@ -9,7 +10,9 @@ def try_gen_folder(folder=None, allow_abs_path_folder_generation=True):
     if not folder_list[0]:
         if not allow_abs_path_folder_generation:
             warnings.warn(
-                "Absolute folder path provided, but setting allow_abs_path_folder_generation = False. No folders will be generated."
+                "Absolute folder path provided, "
+                "but setting allow_abs_path_folder_generation = False. \n"
+                "No folders will be generated."
             )
             return
         else:
@@ -44,7 +47,8 @@ def try_gen_folder(folder=None, allow_abs_path_folder_generation=True):
             print("Creating it...")
             try:
                 os.makedirs(tmp_dir_str)
-            except:
+            except Exception as e:
+                print(e)
                 print("Some problem occured when creating the directory ", tmp_dir_str)
         else:
             print("Found folder: ", tmp_dir_str)

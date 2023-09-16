@@ -1,5 +1,4 @@
 import numpy as np
-import uuid
 import pandas as pd
 import pickle
 
@@ -13,7 +12,7 @@ import torch.nn.functional as F
 
 try:
     import wandb
-except:
+except ImportError:
     print("wandb not available")
 
 
@@ -28,7 +27,8 @@ class DatasetTorch(torch.utils.data.Dataset):
         label_key="labels",
         out_framework="torch",
     ):
-        # AF-TODO: Take device into account at this level, this currently happens only in the training loop
+        # AF-TODO: Take device into account at this level,
+        # this currently happens only in the training loop
         # Initialization
         self.batch_size = batch_size
         self.file_ids = file_ids
@@ -62,7 +62,7 @@ class DatasetTorch(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         # Check if it is time to load the next file
-        if index % self.batches_per_file == 0 or self.tmp_data == None:
+        if ((index % self.batches_per_file) == 0) or (self.tmp_data is None):
             self.__load_file(file_index=self.indexes[index // self.batches_per_file])
 
         # Generate and return a batch
@@ -123,22 +123,23 @@ class DatasetTorch(torch.utils.data.Dataset):
 
 class TorchMLP(nn.Module):
     # AF-TODO: Potentially split this via super-class
-    # In the end I want 'eval', but differentiable w.r.t to input ...., might be a problem
+    # In the end I want 'eval', but differentiable
+    # w.r.t to input ...., might be a problem
     def __init__(
         self,
         network_config=None,
         input_shape=10,
         **kwargs,
-        ):
+    ):
         super(TorchMLP, self).__init__()
 
         self.input_shape = input_shape
         self.network_config = network_config
-        
-        if 'train_output_type' in self.network_config.keys():
-            self.train_output_type = self.network_config['train_output_type']
+
+        if "train_output_type" in self.network_config.keys():
+            self.train_output_type = self.network_config["train_output_type"]
         else:
-            self.train_output_type = 'logprob'
+            self.train_output_type = "logprob"
 
         self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
 
@@ -201,6 +202,7 @@ class TorchMLP(nn.Module):
             )  # log ( 1 / (1 + exp(-x))), where x = log(p / (1 - p))
         else:
             return self.layers[-1](x)
+
 
 class ModelTrainerTorchMLP:
     def __init__(
@@ -268,7 +270,8 @@ class ModelTrainerTorchMLP:
             # }
 
             print("Succefully initialized wandb!")
-        except:
+        except Exception as e:
+            print(e)
             print("wandb not available, not storing results there")
 
     def __get_loss(self):
@@ -350,7 +353,6 @@ class ModelTrainerTorchMLP:
         save_data_details=True,
         verbose=1,
     ):
-        
         try_gen_folder(
             folder=output_folder,
             allow_abs_path_folder_generation=self.allow_abs_path_folder_generation,
@@ -369,7 +371,8 @@ class ModelTrainerTorchMLP:
         else:
             network_type = "unknown"
             print(
-                'Model type identified as "unknown" because the training_output_type attribute'
+                'Model type identified as "unknown" because the '
+                "training_output_type attribute"
                 + ' of the supplied jax model is neither "logprob", nor "logits"'
             )
 
@@ -379,8 +382,8 @@ class ModelTrainerTorchMLP:
 
         try:
             wandb.watch(self.model, criterion=None, log="all", log_freq=1000)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         step_cnt = 0
         for epoch in range(self.train_config["n_epochs"]):
@@ -462,8 +465,8 @@ class ModelTrainerTorchMLP:
             try:
                 wandb.log({"loss": loss, "val_loss": val_loss}, step=step_cnt)
             # print('logged loss')
-            except:
-                pass
+            except Exception as e:
+                print(e)
 
         # Saving
         full_path = (
@@ -484,7 +487,6 @@ class ModelTrainerTorchMLP:
                 train_state_path,
             )
             print("Saving model parameters to: " + train_state_path)
-
 
         if save_config or save_all:
             config_path = full_path + "_train_config.pickle"
@@ -509,10 +511,11 @@ class ModelTrainerTorchMLP:
         try:
             wandb.finish()
             print("wandb uploaded")
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         print("Training finished successfully...")
+
 
 class LoadTorchMLPInfer:
     def __init__(self, model_file_path=None, network_config=None, input_dim=None):
@@ -541,18 +544,25 @@ class LoadTorchMLPInfer:
     @torch.no_grad()
     def predict_on_batch(self, x=None):
         """
-        Intended as function that computes trial wise log-likelihoods from a matrix input.
+        Intended as function that computes trial wise log-likelihoods
+        from a matrix input.
         To be used primarily through the HDDM toolbox.
 
         :Arguments:
             x: numpy.ndarray(dtype=numpy.float32)
-                Matrix which will be passed through the network. LANs expect the matrix columns to follow a specific order.
-                When used in HDDM, x will be passed as follows. The first few columns are trial wise model parameters
-                (order specified in the model_config file under the 'params' key). The last two columns are filled with trial wise
-                reaction times and choices. When not used via HDDM, no such restriction applies.
+                Matrix which will be passed through the network.
+                LANs expect the matrix columns to follow a specific order.
+                When used in HDDM, x will be passed as follows.
+                The first few columns are trial wise model parameters
+                (order specified in the model_config file under the 'params' key).
+                The last two columns are filled with trial wise
+                reaction times and choices.
+                When not used via HDDM, no such restriction applies.
         :Output:
             numpy.ndarray(dtype = numpy.float32)
-                Output of the network. When called through HDDM, this is expected as trial-wise log likelihoods of a given generative model.
+                Output of the network. When called through HDDM,
+                this is expected as trial-wise log likelihoods
+                of a given generative model.
 
         """
         return self.net(torch.from_numpy(x).to(self.dev)).cpu().numpy()
