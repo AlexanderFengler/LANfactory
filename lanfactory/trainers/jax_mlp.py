@@ -200,7 +200,7 @@ class ModelTrainerJaxMLP:
     def __get_loss(self):
         self.loss = partial(
             self.loss_dict[self.train_config["loss"]]["fun"],
-            **self.loss_dict[self.train_config["loss"]]["kwargs"]
+            **self.loss_dict[self.train_config["loss"]]["kwargs"],
         )
 
     def __make_apply_model(self, train=True):

@@ -9,7 +9,7 @@ requires = ["setuptools", "wheel"]
 name= "lanfactory"
 version= "0.4.0"
 authors= [{name = "Alexander Fenger", email = "alexander_fengler@brown.edu"}]
-description= "Package with convenience functions to train LANs",
+description= "Package with convenience functions to train LANs"
 readme = "README.md"
 requires-python= ">3.8, <3.11"
 classifiers= [

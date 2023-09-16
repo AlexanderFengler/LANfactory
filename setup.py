@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(   
+setup(
     packages=[
         "lanfactory",
         "lanfactory.config",
