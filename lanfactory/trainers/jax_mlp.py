@@ -26,13 +26,14 @@ except ImportError:
    are used to train Jax based LANs and CPNs.
 """
 
+
 def MLPJaxFactory(network_config={}, train=True):
     """Factory function to create a MLPJax object.
     Arguments
     ---------
-        network_config (dict): 
+        network_config (dict):
             Dictionary containing the network configuration.
-        train (bool): 
+        train (bool):
             Whether the model should be trained or not.
     Returns
     -------
@@ -45,11 +46,12 @@ def MLPJaxFactory(network_config={}, train=True):
         train=train,
     )
 
+
 class MLPJax(nn.Module):
     """JaxMLP class.
     Arguments
     ---------
-        layer_sizes (Sequence[int]): 
+        layer_sizes (Sequence[int]):
             Sequence of integers containing the sizes of the layers.
         activations (Sequence[str]):
             Sequence of strings containing the activation functions.
@@ -57,7 +59,7 @@ class MLPJax(nn.Module):
             Whether the model should be set to training mode or not.
         train_output_type (str):
             The output type of the model during training.
-    """    
+    """
 
     layer_sizes: Sequence[int] = (100, 90, 80, 1)
     activations: Sequence[str] = ("tanh", "tanh", "tanh", "linear")
@@ -73,7 +75,7 @@ class MLPJax(nn.Module):
     network_type = "lan" if train_output_type == "logprob" else "cpn"
 
     def setup(self):
-        """Setup function for the JaxMLP class. 
+        """Setup function for the JaxMLP class.
         Initializes the layers and activation functions.
         """
         # TODO: Warn if unknown activation string used
@@ -191,7 +193,7 @@ class MLPJax(nn.Module):
                 Path to the file containing the state dictionary (if loaded from file).
             add_jitted (bool):
                 Whether the partial function should be jitted or not.
-        
+
         Returns
         -------
             Callable:
@@ -312,6 +314,7 @@ class ModelTrainerJaxMLP:
 
     def __make_apply_model(self, train=True):
         """Compile forward pass with loss aplication"""
+
         @jax.jit
         def apply_model_core(state, features, labels):
             def loss_fn(params):
@@ -332,6 +335,7 @@ class ModelTrainerJaxMLP:
 
     def __make_update_model(self):
         """Compile gradient application"""
+
         @jax.jit
         def update_model(state, grads):
             return state.apply_gradients(grads=grads)
@@ -342,7 +346,7 @@ class ModelTrainerJaxMLP:
         self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
     ):
         """Helper function to initialize wandb
-        
+
         Arguments
         ---------
             wandb_project_id (str):
@@ -351,7 +355,7 @@ class ModelTrainerJaxMLP:
                 The file id.
             run_id (str):
                 The run id.
-                
+
         """
         try:
             wandb.init(
@@ -401,7 +405,7 @@ class ModelTrainerJaxMLP:
                 The current epoch.
             max_epochs (int):
                 The maximum number of epochs.
-                
+
         Returns
         -------
             tuple (flax.core.frozen_dict.FrozenDict, float):
@@ -495,36 +499,36 @@ class ModelTrainerJaxMLP:
         verbose=1,
     ):
         """Train and evaluate JAXMLP model.
-    Arguments
-    ---------
+        Arguments
+        ---------
 
-        output_folder (str):
-            Path to the output folder.
-        output_file_id (str):
-            The file id.
-        run_id (str):
-            The run id.
-        wandb_on (bool):
-            Whether to use wandb or not.
-        wandb_project_id (str):
-            Project id for wandb.
-        save_history (bool):
-            Whether to save the training history or not.
-        save_model (bool):
-            Whether to save the model or not.
-        save_config (bool):
-            Whether to save the training configuration or not.
-        save_all (bool):
-            Whether to save all files or not.
-        save_data_details (bool):
-            Whether to save the data details or not.
-        verbose (int):
-            The verbosity level.
-    Returns
-    -------
-        flax.core.frozen_dict.FrozenDict:
-            The final state dictionary (model state).
-    """
+            output_folder (str):
+                Path to the output folder.
+            output_file_id (str):
+                The file id.
+            run_id (str):
+                The run id.
+            wandb_on (bool):
+                Whether to use wandb or not.
+            wandb_project_id (str):
+                Project id for wandb.
+            save_history (bool):
+                Whether to save the training history or not.
+            save_model (bool):
+                Whether to save the model or not.
+            save_config (bool):
+                Whether to save the training configuration or not.
+            save_all (bool):
+                Whether to save all files or not.
+            save_data_details (bool):
+                Whether to save the data details or not.
+            verbose (int):
+                The verbosity level.
+        Returns
+        -------
+            flax.core.frozen_dict.FrozenDict:
+                The final state dictionary (model state).
+        """
         try_gen_folder(
             folder=output_folder,
             allow_abs_path_folder_generation=self.allow_abs_path_folder_generation,

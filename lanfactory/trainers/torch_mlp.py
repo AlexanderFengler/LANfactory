@@ -17,9 +17,10 @@ except ImportError:
 
 """This module contains the classes for training TorchMLP models."""
 
+
 class DatasetTorch(torch.utils.data.Dataset):
     """Dataset class for TorchMLP training.
-    
+
     Arguments
     ----------
         file_ids (list):
@@ -152,6 +153,7 @@ class TorchMLP(nn.Module):
         input_shape (int):
             Input shape.
     """
+
     # AF-TODO: Potentially split this via super-class
     # In the end I want 'eval', but differentiable
     # w.r.t to input ...., might be a problem
@@ -223,12 +225,12 @@ class TorchMLP(nn.Module):
     # Define forward pass
     def forward(self, x):
         """Forward pass through network.
-        
+
         Arguments
         ---------
             x (torch.Tensor):
                 Input tensor.
-        
+
         Returns
         -------
             torch.Tensor:
@@ -258,23 +260,23 @@ class ModelTrainerTorchMLP:
         seed=None,
     ):
         """Class to train Torch Models.
-    Arguments
-    ---------
-        train_config (dict):
-            Training configuration.
-        model (TorchMLP):
-            TorchMLP model.
-        train_dl (DatasetTorch):
-            Training dataloader.
-        valid_dl (DatasetTorch):
-            Validation dataloader.
-        allow_abs_path_folder_generation (bool):
-            Whether to allow absolute path folder generation.
-        pin_memory (bool):
-            Whether to pin memory (dataloader). Can affect speed.
-        seed (int):
-            Random seed.
-    """
+        Arguments
+        ---------
+            train_config (dict):
+                Training configuration.
+            model (TorchMLP):
+                TorchMLP model.
+            train_dl (DatasetTorch):
+                Training dataloader.
+            valid_dl (DatasetTorch):
+                Validation dataloader.
+            allow_abs_path_folder_generation (bool):
+                Whether to allow absolute path folder generation.
+            pin_memory (bool):
+                Whether to pin memory (dataloader). Can affect speed.
+            seed (int):
+                Random seed.
+        """
         torch.backends.cudnn.benchmark = True
         self.dev = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -581,9 +583,10 @@ class ModelTrainerTorchMLP:
 
         print("Training finished successfully...")
 
+
 class LoadTorchMLPInfer:
-    """Class to load TorchMLP models for inference. (This 
-    was originally useful directly for application in the 
+    """Class to load TorchMLP models for inference. (This
+    was originally useful directly for application in the
     HDDM toolbox).
 
     Arguments
@@ -596,6 +599,7 @@ class LoadTorchMLPInfer:
             Input dimension.
 
     """
+
     def __init__(self, model_file_path=None, network_config=None, input_dim=None):
         torch.backends.cudnn.benchmark = True
         self.dev = (
@@ -650,7 +654,7 @@ class LoadTorchMLPInfer:
 
 class LoadTorchMLP:
     """Class to load TorchMLP models.
-    
+
     Arguments
     ---------
         model_file_path (str):
@@ -659,6 +663,7 @@ class LoadTorchMLP:
             Network configuration.
         input_dim (int):
             Input dimension."""
+
     def __init__(self, model_file_path=None, network_config=None, input_dim=None):
         ##torch.backends.cudnn.benchmark = True
         self.dev = (

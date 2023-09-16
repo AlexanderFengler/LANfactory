@@ -9,6 +9,7 @@ from lanfactory.trainers.torch_mlp import TorchMLP
 Can be run as a script.
 """
 
+
 def transform_to_onnx(
     network_config_file: str,
     state_dict_file: str,
@@ -20,13 +21,13 @@ def transform_to_onnx(
 
     Arguments
     ---------
-        network_config_file (str): 
+        network_config_file (str):
             Path to the pickle file containing the network configuration.
-        state_dict_file (str): 
+        state_dict_file (str):
             Path to the file containing the state dictionary of the model.
-        input_shape (int): 
+        input_shape (int):
             The size of the input tensor for the model.
-        output_onnx_file (str): 
+        output_onnx_file (str):
             Path to the output ONNX file.
     """
     with open(network_config_file, "rb") as f:

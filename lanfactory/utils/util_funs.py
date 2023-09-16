@@ -6,14 +6,15 @@ import warnings
 
 
 def try_gen_folder(folder=None, allow_abs_path_folder_generation=True):
-    """Fucntion to generate a folder from a string. If the folder already exists, it will not be generated.
+    """Function to generate a folder from a string. If the folder already exists, it will not be generated.
 
     Arguments
     ---------
-        folder (str): 
+        folder (str):
             The folder string to generate.
-        allow_abs_path_folder_generation (bool): 
-            If True, the folder string is treated as an absolute path. If False, the folder string is treated as a relative path.
+        allow_abs_path_folder_generation (bool):
+            If True, the folder string is treated as an absolute path.
+            If False, the folder string is treated as a relative path.
 
     """
     folder_list = folder.split("/")
@@ -81,18 +82,19 @@ def save_configs(
 
     Arguments
     ---------
-        model_id (str): 
+        model_id (str):
             The id of the model.
-        save_folder (str): 
+        save_folder (str):
             The folder to save the configurations to.
-        network_config (dict): 
+        network_config (dict):
             The network configuration dictionary.
-        train_config (dict): 
+        train_config (dict):
             The training configuration dictionary.
-        allow_abs_path_folder_generation (bool): 
-            If True, the folder string is treated as an absolute path. If False, the folder string is treated as a relative path.
+        allow_abs_path_folder_generation (bool):
+            If True, the folder string is treated as an absolute path.
+            If False, the folder string is treated as a relative path.
     """
-    
+
     # Generate save_folder if it doesn't yet exist
     try_gen_folder(
         folder=save_folder,
