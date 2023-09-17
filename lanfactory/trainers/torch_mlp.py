@@ -15,8 +15,30 @@ try:
 except ImportError:
     print("wandb not available")
 
+"""This module contains the classes for training TorchMLP models."""
+
 
 class DatasetTorch(torch.utils.data.Dataset):
+    """Dataset class for TorchMLP training.
+
+    Arguments
+    ----------
+        file_ids (list):
+            List of paths to the data files.
+        batch_size (int):
+            Batch size.
+        label_lower_bound (float):
+            Lower bound for the labels.
+        label_upper_bound (float):
+            Upper bound for the labels.
+        features_key (str):
+            Key for the features in the data files.
+        label_key (str):
+            Key for the labels in the data files.
+        out_framework (str):
+            Output framework.
+    """
+
     def __init__(
         self,
         file_ids,
@@ -122,6 +144,16 @@ class DatasetTorch(torch.utils.data.Dataset):
 
 
 class TorchMLP(nn.Module):
+    """TorchMLP class.
+
+    Arguments
+    ----------
+        network_config (dict):
+            Network configuration.
+        input_shape (int):
+            Input shape.
+    """
+
     # AF-TODO: Potentially split this via super-class
     # In the end I want 'eval', but differentiable
     # w.r.t to input ...., might be a problem
@@ -192,6 +224,18 @@ class TorchMLP(nn.Module):
 
     # Define forward pass
     def forward(self, x):
+        """Forward pass through network.
+
+        Arguments
+        ---------
+            x (torch.Tensor):
+                Input tensor.
+
+        Returns
+        -------
+            torch.Tensor:
+                Output tensor.
+        """
         for i in range(self.len_layers - 1):
             x = self.layers[i](x)
         if self.training or self.train_output_type == "logprob":
@@ -215,7 +259,24 @@ class ModelTrainerTorchMLP:
         pin_memory=True,
         seed=None,
     ):
-        # Class to train MLP models (This is in fact not MLP specific --> rename?)
+        """Class to train Torch Models.
+        Arguments
+        ---------
+            train_config (dict):
+                Training configuration.
+            model (TorchMLP):
+                TorchMLP model.
+            train_dl (DatasetTorch):
+                Training dataloader.
+            valid_dl (DatasetTorch):
+                Validation dataloader.
+            allow_abs_path_folder_generation (bool):
+                Whether to allow absolute path folder generation.
+            pin_memory (bool):
+                Whether to pin memory (dataloader). Can affect speed.
+            seed (int):
+                Random seed.
+        """
         torch.backends.cudnn.benchmark = True
         self.dev = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -247,28 +308,7 @@ class ModelTrainerTorchMLP:
                     + run_id
                 ),
                 config=self.train_config,
-                # {
-                #     "learning_rate": self.train_config["learning_rate"],
-                #     "weight_decay": self.train_config["weight_decay"],
-                #     "epochs": self.train_config["n_epochs"],
-                #     "batch_size": self.train_config["batch_size"]
-                #     "file_id": file_id,
-                #     "lr_scheduler": self.train_config["lr_scheduler"],
-                #     "lr_scheduler_params": self.train_config["lr_scheduler_params"],
-                #     "run_id": run_id,
-                # },
             )
-
-            # wandb.config = {
-            #     "learning_rate": self.train_config["learning_rate"],
-            #     "weight_decay": self.train_config["weight_decay"],
-            #     "epochs": self.train_config["n_epochs"],
-            #     "batch_size": self.train_config["gpu_batch_size"]
-            #     if torch.cuda.is_available()
-            #     else self.train_config["cpu_batch_size"],
-            #     "model_id": self.model.model_id,
-            # }
-
             print("Succefully initialized wandb!")
         except Exception as e:
             print(e)
@@ -353,6 +393,33 @@ class ModelTrainerTorchMLP:
         save_data_details=True,
         verbose=1,
     ):
+        """Train and evaluate the model.
+
+        Arguments
+        ---------
+            output_folder (str):
+                Output folder.
+            output_file_id (str):
+                Output file ID.
+            run_id (str):
+                Run ID.
+            wandb_on (bool):
+                Whether to use wandb.
+            wandb_project_id (str):
+                Wandb project ID.
+            save_history (bool):
+                Whether to save the training history.
+            save_model (bool):
+                Whether to save the model.
+            save_config (bool):
+                Whether to save the training configuration.
+            save_all (bool):
+                Whether to save all.
+            save_data_details (bool):
+                Whether to save the data details.
+            verbose (int):
+                Verbosity level.
+        """
         try_gen_folder(
             folder=output_folder,
             allow_abs_path_folder_generation=self.allow_abs_path_folder_generation,
@@ -518,6 +585,21 @@ class ModelTrainerTorchMLP:
 
 
 class LoadTorchMLPInfer:
+    """Class to load TorchMLP models for inference. (This
+    was originally useful directly for application in the
+    HDDM toolbox).
+
+    Arguments
+    ---------
+        model_file_path (str):
+            Path to the model file.
+        network_config (dict):
+            Network configuration.
+        input_dim (int):
+            Input dimension.
+
+    """
+
     def __init__(self, model_file_path=None, network_config=None, input_dim=None):
         torch.backends.cudnn.benchmark = True
         self.dev = (
@@ -548,8 +630,9 @@ class LoadTorchMLPInfer:
         from a matrix input.
         To be used primarily through the HDDM toolbox.
 
-        :Arguments:
-            x: numpy.ndarray(dtype=numpy.float32)
+        Arguments
+        ---------
+            x (numpy.ndarray(dtype=numpy.float32)):
                 Matrix which will be passed through the network.
                 LANs expect the matrix columns to follow a specific order.
                 When used in HDDM, x will be passed as follows.
@@ -558,8 +641,9 @@ class LoadTorchMLPInfer:
                 The last two columns are filled with trial wise
                 reaction times and choices.
                 When not used via HDDM, no such restriction applies.
-        :Output:
-            numpy.ndarray(dtype = numpy.float32)
+        Output
+        ------
+            numpy.ndarray(dtype = numpy.float32):
                 Output of the network. When called through HDDM,
                 this is expected as trial-wise log likelihoods
                 of a given generative model.
@@ -569,6 +653,17 @@ class LoadTorchMLPInfer:
 
 
 class LoadTorchMLP:
+    """Class to load TorchMLP models.
+
+    Arguments
+    ---------
+        model_file_path (str):
+            Path to the model file.
+        network_config (dict):
+            Network configuration.
+        input_dim (int):
+            Input dimension."""
+
     def __init__(self, model_file_path=None, network_config=None, input_dim=None):
         ##torch.backends.cudnn.benchmark = True
         self.dev = (

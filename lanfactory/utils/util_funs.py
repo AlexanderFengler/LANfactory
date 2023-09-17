@@ -2,8 +2,21 @@ import os
 import pickle
 import warnings
 
+"""Some utility functions for the lanfactory package."""
+
 
 def try_gen_folder(folder=None, allow_abs_path_folder_generation=True):
+    """Function to generate a folder from a string. If the folder already exists, it will not be generated.
+
+    Arguments
+    ---------
+        folder (str):
+            The folder string to generate.
+        allow_abs_path_folder_generation (bool):
+            If True, the folder string is treated as an absolute path.
+            If False, the folder string is treated as a relative path.
+
+    """
     folder_list = folder.split("/")
 
     # Check if folder string supplied defines a relative or absolute path
@@ -65,6 +78,23 @@ def save_configs(
     train_config=None,
     allow_abs_path_folder_generation=True,
 ):
+    """Function to save the network and training configurations to a folder.
+
+    Arguments
+    ---------
+        model_id (str):
+            The id of the model.
+        save_folder (str):
+            The folder to save the configurations to.
+        network_config (dict):
+            The network configuration dictionary.
+        train_config (dict):
+            The training configuration dictionary.
+        allow_abs_path_folder_generation (bool):
+            If True, the folder string is treated as an absolute path.
+            If False, the folder string is treated as a relative path.
+    """
+
     # Generate save_folder if it doesn't yet exist
     try_gen_folder(
         folder=save_folder,
