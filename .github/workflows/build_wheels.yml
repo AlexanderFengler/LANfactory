@@ -11,28 +11,28 @@ on:
       - published
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, windows-2022, macos-11]
+  # build_wheels:
+  #   name: Build wheels on ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     matrix:
+  #       os: [ubuntu-22.04, windows-2022, macos-11]
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
-        env:
-          CIBW_BUILD: cp39-* cp310-*
-          CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
-          CIBW_ARCHS_LINUX: auto64
-          CIBW_ARCHS_WINDOWS: auto64
-          CIBW_BUILD_FRONTEND: build
+  #     - name: Build wheels
+  #       uses: pypa/cibuildwheel@v2.15.0
+  #       env:
+  #         CIBW_BUILD: cp39-* cp310-*
+  #         CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+  #         CIBW_ARCHS_LINUX: auto64
+  #         CIBW_ARCHS_WINDOWS: auto64
+  #         CIBW_BUILD_FRONTEND: build
 
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
@@ -48,7 +48,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload_test_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build_sdist] #[build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     # or, alternatively, upload to PyPI on every tag starting with 'v' (remove on: release above to use this)
@@ -67,7 +67,7 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
 
   upload_pypi:
-    needs: [build_wheels, build_sdist, upload_test_pypi]
+    needs: [build_sdist, upload_test_pypi] #[build_wheels, build_sdist, upload_test_pypi]
     runs-on: ubuntu-latest
     # Add these back after setting up trusted publishing
     # environment: pypi
