@@ -39,10 +39,21 @@ def MLPJaxFactory(network_config={}, train=True):
     -------
         MLPJax class initialized with the correct network configuration.
     """
+
+    if isinstance(network_config, str):
+        network_config_internal = pickle.load(open(network_config, "rb"))
+    elif isinstance(network_config, dict):
+        network_config_internal = network_config
+    else:
+        raise ValueError(
+            "network_config argument is not passed as "
+            + "either a dictionary or a string (path to a file)!"
+        )
+
     return MLPJax(
-        layer_sizes=network_config["layer_sizes"],
-        activations=network_config["activations"],
-        train_output_type=network_config["train_output_type"],
+        layer_sizes=network_config_internal["layer_sizes"],
+        activations=network_config_internal["activations"],
+        train_output_type=network_config_internal["train_output_type"],
         train=train,
     )
 
@@ -172,9 +183,7 @@ class MLPJax(nn.Module):
         self,
         seed=42,
         input_dim=6,
-        state_dict_from_file=True,
         state=None,
-        file_path=None,
         add_jitted=False,
     ):
         """Creates a partial function for the forward pass of the network.
@@ -185,12 +194,8 @@ class MLPJax(nn.Module):
                 Seed for the random number generator.
             input_dim (int):
                 Dimension of the input tensor.
-            state_dict_from_file (bool):
-                Whether the state dictionary should be loaded from a file or not.
             state (flax.core.frozen_dict.FrozenDict):
                 The state dictionary (if not loaded from file).
-            file_path (str):
-                Path to the file containing the state dictionary (if loaded from file).
             add_jitted (bool):
                 Whether the partial function should be jitted or not.
 
@@ -200,26 +205,20 @@ class MLPJax(nn.Module):
                 The partial function for the forward pass of the network.
         """
 
-        if state_dict_from_file:
-            if file_path is None:
-                raise ValueError(
-                    "file_path argument can't be None, "
-                    + "if the state_dict_from_file argument is True!"
-                )
-            else:
-                loaded_state = self.load_state_from_file(
-                    seed=seed, input_dim=input_dim, file_path=file_path
-                )
+        # Load state
+        if isinstance(state, str):
+            loaded_state = self.load_state_from_file(
+                seed=seed, input_dim=input_dim, file_path=state
+            )
+        elif isinstance(state, dict):
+            loaded_state = state
         else:
-            if state is None:
-                raise ValueError(
-                    "state argument can't be None, "
-                    + "if the state_dict_from_file argument is set to False"
-                )
-            else:
-                loaded_state = state
+            raise ValueError("state argument has to be a dictionary or a string!")
 
+        # Make forward pass
         net_forward = partial(self.apply, loaded_state)
+
+        # Jit forward pass
         if add_jitted:
             net_forward_jitted = jax.jit(net_forward)
         else:
