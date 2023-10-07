@@ -282,7 +282,20 @@ class ModelTrainerTorchMLP:
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
         print("Torch Device: ", self.dev)
-        self.train_config = train_config
+        if train_config is None:
+            ValueError('train_config is passed as None')
+        elif isinstance(train_config, str):
+            print('train_config is passed as string: ', train_config)
+            try:
+                print('Trying to load string as path to pickle file: ')
+                self.train_config = pickle.load(open(train_config, 'rb'))
+            except Exception as e:
+                print(e)
+        elif isinstance(train_config, dict):
+            print('train_config is passed as dictionary: ')
+            print(train_config)
+            self.train_config = train_config
+
         self.model = model.to(self.dev)
         self.allow_abs_path_folder_generation = allow_abs_path_folder_generation
         self.train_dl = train_dl
@@ -315,6 +328,7 @@ class ModelTrainerTorchMLP:
             print("wandb not available, not storing results there")
 
     def __get_loss(self):
+        print(self.train_config)
         if self.train_config["loss"] == "huber":
             self.loss_fun = F.huber_loss
         elif self.train_config["loss"] == "mse":
@@ -606,7 +620,15 @@ class LoadTorchMLPInfer:
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
         self.model_file_path = model_file_path
-        self.network_config = network_config
+
+        if isinstance(network_config, str):
+            self.network_config = pickle.load(open(network_config, 'rb'))
+        elif isinstance(network_config, dict):
+            self.network_config = network_config
+        else:
+            raise ValueError('network config is neither a string nor a dictionary')
+
+        #self.network_config = network_config
         self.input_dim = input_dim
 
         self.net = TorchMLP(
