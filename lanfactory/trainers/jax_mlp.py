@@ -41,12 +41,14 @@ def MLPJaxFactory(network_config={}, train=True):
     """
 
     if isinstance(network_config, str):
-        network_config_internal = pickle.load(open(network_config, 'rb'))
+        network_config_internal = pickle.load(open(network_config, "rb"))
     elif isinstance(network_config, dict):
         network_config_internal = network_config
     else:
-        raise ValueError('network_config argument is not passed as ' + \
-            'either a dictionary or a string (path to a file)!')
+        raise ValueError(
+            "network_config argument is not passed as "
+            + "either a dictionary or a string (path to a file)!"
+        )
 
     return MLPJax(
         layer_sizes=network_config_internal["layer_sizes"],
@@ -206,13 +208,11 @@ class MLPJax(nn.Module):
         # Load state
         if isinstance(state, str):
             loaded_state = self.load_state_from_file(
-                                                    seed=seed, 
-                                                    input_dim=input_dim, 
-                                                    file_path=state
-                )
+                seed=seed, input_dim=input_dim, file_path=state
+            )
         elif isinstance(state, dict):
             loaded_state = state
-        else: 
+        else:
             raise ValueError("state argument has to be a dictionary or a string!")
 
         # Make forward pass
@@ -225,6 +225,7 @@ class MLPJax(nn.Module):
             net_forward_jitted = None
 
         return net_forward, net_forward_jitted
+
 
 class ModelTrainerJaxMLP:
     def __init__(

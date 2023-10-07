@@ -283,16 +283,16 @@ class ModelTrainerTorchMLP:
         )
         print("Torch Device: ", self.dev)
         if train_config is None:
-            ValueError('train_config is passed as None')
+            ValueError("train_config is passed as None")
         elif isinstance(train_config, str):
-            print('train_config is passed as string: ', train_config)
+            print("train_config is passed as string: ", train_config)
             try:
-                print('Trying to load string as path to pickle file: ')
-                self.train_config = pickle.load(open(train_config, 'rb'))
+                print("Trying to load string as path to pickle file: ")
+                self.train_config = pickle.load(open(train_config, "rb"))
             except Exception as e:
                 print(e)
         elif isinstance(train_config, dict):
-            print('train_config is passed as dictionary: ')
+            print("train_config is passed as dictionary: ")
             print(train_config)
             self.train_config = train_config
 
@@ -622,13 +622,13 @@ class LoadTorchMLPInfer:
         self.model_file_path = model_file_path
 
         if isinstance(network_config, str):
-            self.network_config = pickle.load(open(network_config, 'rb'))
+            self.network_config = pickle.load(open(network_config, "rb"))
         elif isinstance(network_config, dict):
             self.network_config = network_config
         else:
-            raise ValueError('network config is neither a string nor a dictionary')
+            raise ValueError("network config is neither a string nor a dictionary")
 
-        #self.network_config = network_config
+        # self.network_config = network_config
         self.input_dim = input_dim
 
         self.net = TorchMLP(
