@@ -7,7 +7,7 @@ requires = ["setuptools", "wheel"]
 
 [project]
 name= "lanfactory"
-version= "0.4.2"
+version= "0.4.3"
 authors= [{name = "Alexander Fenger", email = "alexander_fengler@brown.edu"}]
 description= "Package with convenience functions to train LANs"
 readme = "README.md"
@@ -24,7 +24,7 @@ dependencies=[
         "SciPy >= 1.6.3",
         "pandas >= 1.2.4",
         "torch >= 1.7",
-        "jax >= 0.4.2",
+        "jax >= 0.4.14",
         "flax >= 0.6.4",
         "optax >= 0.1.4",
         "tqdm >= 4.0.0",

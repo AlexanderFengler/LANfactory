@@ -6,5 +6,6 @@ setup(
         "lanfactory.config",
         "lanfactory.trainers",
         "lanfactory.utils",
+        "lanfactory.onnx"
     ],
 )
