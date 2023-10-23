@@ -71,9 +71,8 @@ class MLPJax(nn.Module):
         train_output_type (str):
             The output type of the model during training.
     """
-    network_type_dict: dict = frozendict({'logprob': 'lan',
-                                          'logits': 'cpn'}
-                                        )
+
+    network_type_dict: dict = frozendict({"logprob": "lan", "logits": "cpn"})
     layer_sizes: Sequence[int] = (100, 90, 80, 1)
     activations: Sequence[str] = ("tanh", "tanh", "tanh", "linear")
     train: bool = True
@@ -130,13 +129,13 @@ class MLPJax(nn.Module):
                     x = self.activation_funs[i](x)
 
         if (not self.train) and (self.train_output_type == "logprob"):
-            print('passing through identity')
+            print("passing through identity")
             x = x  # just for pedagogy
         elif (not self.train) and (self.train_output_type == "logits"):
-            print('passing through transform')
+            print("passing through transform")
             x = -jnp.log((1 + jnp.exp(-x)))
         elif not self.train:
-            print('passing through identity 2')
+            print("passing through identity 2")
             x = x  # just for pedagogy
 
         return x
