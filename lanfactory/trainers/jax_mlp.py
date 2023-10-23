@@ -4,7 +4,7 @@ import pandas as pd
 import pickle
 from functools import partial
 from frozendict import frozendict
-from typing import Sequence, Optional
+from typing import Sequence
 
 from lanfactory.utils import try_gen_folder
 from time import time
