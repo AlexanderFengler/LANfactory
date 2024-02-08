@@ -13,6 +13,7 @@ import torch.nn.functional as F
 try:
     import wandb
 except ImportError:
+    print('passing 1')
     print("wandb not available")
 
 """This module contains the classes for training TorchMLP models."""
@@ -132,7 +133,13 @@ class DatasetTorch(torch.utils.data.Dataset):
     def __data_generation(self, batch_ids=None):
         # Generates data containing batch_size samples
         X = self.tmp_data[self.features_key][batch_ids, :]
-        y = np.expand_dims(self.tmp_data[self.label_key][batch_ids], axis=1)
+        if self.tmp_data[self.label_key].ndim == 1:
+            y = np.expand_dims(self.tmp_data[self.label_key][batch_ids], axis=1)
+        elif self.tmp_data[self.label_key].ndim == 2:
+            y = self.tmp_data[self.label_key][batch_ids]
+        else:
+            raise ValueError("Label data has unexpected shape: " + \
+                             str(self.tmp_data[self.label_key].shape))
 
         if self.label_lower_bound is not None:
             y[y < self.label_lower_bound] = self.label_lower_bound
@@ -296,6 +303,7 @@ class ModelTrainerTorchMLP:
     def __try_wandb(
         self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
     ):
+        print('passing 2')
         try:
             wandb.init(
                 project=wandb_project_id,
@@ -311,6 +319,7 @@ class ModelTrainerTorchMLP:
             )
             print("Succefully initialized wandb!")
         except Exception as e:
+            print('passing 3')
             print(e)
             print("wandb not available, not storing results there")
 
@@ -447,10 +456,12 @@ class ModelTrainerTorchMLP:
             np.zeros((self.train_config["n_epochs"], 2)), columns=["epoch", "val_loss"]
         )
 
-        try:
-            wandb.watch(self.model, criterion=None, log="all", log_freq=1000)
-        except Exception as e:
-            print(e)
+        if wandb_on:
+            try:
+                wandb.watch(self.model, criterion=None, log="all", log_freq=1000)
+            except Exception as e:
+                print('passing 4')
+                print(e)
 
         step_cnt = 0
         for epoch in range(self.train_config["n_epochs"]):
@@ -529,11 +540,13 @@ class ModelTrainerTorchMLP:
             training_history.values[epoch, :] = [epoch, val_loss.cpu()]
 
             # Log wandb if possible
-            try:
-                wandb.log({"loss": loss, "val_loss": val_loss}, step=step_cnt)
-            # print('logged loss')
-            except Exception as e:
-                print(e)
+            if wandb_on:
+                try:
+                    wandb.log({"loss": loss, "val_loss": val_loss}, step=step_cnt)
+                # print('logged loss')
+                except Exception as e:
+                    print('passing 5')
+                    print(e)
 
         # Saving
         full_path = (
@@ -575,11 +588,13 @@ class ModelTrainerTorchMLP:
             print("Saving training data details to: " + data_details_path)
 
         # Upload wandb data
-        try:
-            wandb.finish()
-            print("wandb uploaded")
-        except Exception as e:
-            print(e)
+        if wandb_on:
+            try:
+                wandb.finish()
+                print("wandb uploaded")
+            except Exception as e:
+                print('passing 6')
+                print(e)
 
         print("Training finished successfully...")
 
