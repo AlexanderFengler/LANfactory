@@ -2,6 +2,9 @@
 .DS_Store
 notebooks/data/
 
+notebooks/test_notebooks/data/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
