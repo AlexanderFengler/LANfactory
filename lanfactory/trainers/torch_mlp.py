@@ -161,6 +161,8 @@ class TorchMLP(nn.Module):
             Network configuration.
         input_shape (int):
             Input shape.
+        network_type (str):
+            Network type.
     """
 
     # AF-TODO: Potentially split this via super-class
@@ -170,6 +172,7 @@ class TorchMLP(nn.Module):
         self,
         network_config=None,
         input_shape=10,
+        network_type=None,
         **kwargs,
     ):
         super(TorchMLP, self).__init__()
@@ -182,7 +185,12 @@ class TorchMLP(nn.Module):
         else:
             self.train_output_type = "logprob"
 
-        self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
+        if network_type is not None:
+            self.network_type = network_type
+        else:
+            self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
+            print('Setting network type to "lan" or "cpn" based on train_output_type. \n' + \
+                  'Note: This is only a default setting, and can be overwritten by the network_type argument.')
 
         self.activations = {
             "relu": torch.nn.ReLU(),
@@ -459,17 +467,17 @@ class ModelTrainerTorchMLP:
             )
 
         # Identify network type:
-        if self.model.train_output_type == "logprob":
-            network_type = "lan"
-        elif self.model.train_output_type == "logits":
-            network_type = "cpn"
-        else:
-            network_type = "unknown"
-            print(
-                'Model type identified as "unknown" because the '
-                "training_output_type attribute"
-                + ' of the supplied jax model is neither "logprob", nor "logits"'
-            )
+        # if self.model.train_output_type == "logprob":
+        #     network_type = "lan"
+        # elif self.model.train_output_type == "logits":
+        #     network_type = "cpn"
+        # else:
+        #     network_type = "unknown"
+        #     print(
+        #         'Model type identified as "unknown" because the '
+        #         "training_output_type attribute"
+        #         + ' of the supplied jax model is neither "logprob", nor "logits"'
+        #     )
 
         training_history = pd.DataFrame(
             np.zeros((self.train_config["n_epochs"], 2)), columns=["epoch", "val_loss"]
@@ -569,7 +577,7 @@ class ModelTrainerTorchMLP:
 
         # Saving
         full_path = (
-            output_folder + "/" + output_file_id + "_" + network_type + "_" + run_id
+            output_folder + "/" + output_file_id + "_" + self.model.network_type + "_" + run_id
         )
 
         if save_history or save_all:
