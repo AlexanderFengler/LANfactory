@@ -1,6 +1,7 @@
 """This Module defines simple examples for network and training configurations that serve
 as inputs to the training classes in the package.
 """
+
 network_config_cpn = {
     "layer_sizes": [100, 100, 1],
     "activations": ["tanh", "tanh", "linear"],

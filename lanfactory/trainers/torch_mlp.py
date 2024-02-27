@@ -379,34 +379,49 @@ class ModelTrainerTorchMLP:
                 self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
                     self.optimizer,
                     mode="min",
-                    factor=self.train_config["lr_scheduler_params"]["factor"]
-                    if "factor" in self.train_config["lr_scheduler_params"].keys()
-                    else 0.1,
-                    patience=self.train_config["lr_scheduler_params"]["patience"]
-                    if "patience" in self.train_config["lr_scheduler_params"].keys()
-                    else 2,
-                    threshold=self.train_config["lr_scheduler_params"]["threshold"]
-                    if "threshold" in self.train_config["lr_scheduler_params"].keys()
-                    else 0.001,
+                    factor=(
+                        self.train_config["lr_scheduler_params"]["factor"]
+                        if "factor" in self.train_config["lr_scheduler_params"].keys()
+                        else 0.1
+                    ),
+                    patience=(
+                        self.train_config["lr_scheduler_params"]["patience"]
+                        if "patience" in self.train_config["lr_scheduler_params"].keys()
+                        else 2
+                    ),
+                    threshold=(
+                        self.train_config["lr_scheduler_params"]["threshold"]
+                        if "threshold"
+                        in self.train_config["lr_scheduler_params"].keys()
+                        else 0.001
+                    ),
                     threshold_mode="rel",
                     cooldown=0,
-                    min_lr=self.train_config["lr_scheduler_params"]["min_lr"]
-                    if "min_lr" in self.train_config["lr_scheduler_params"].keys()
-                    else 0.00000001,
-                    verbose=self.train_config["lr_scheduler_params"]["verbose"]
-                    if "verbose" in self.train_config["lr_scheduler_params"].keys()
-                    else True,
+                    min_lr=(
+                        self.train_config["lr_scheduler_params"]["min_lr"]
+                        if "min_lr" in self.train_config["lr_scheduler_params"].keys()
+                        else 0.00000001
+                    ),
+                    verbose=(
+                        self.train_config["lr_scheduler_params"]["verbose"]
+                        if "verbose" in self.train_config["lr_scheduler_params"].keys()
+                        else True
+                    ),
                 )
             elif self.train_config["lr_scheduler"] == "multiply":
                 self.scheduler = optim.lr_scheduler.ExponentialLR(
                     self.optimizer,
-                    gamma=self.train_config["lr_scheduler_params"]["factor"]
-                    if "factor" in self.train_config["lr_scheduler_params"].keys()
-                    else 0.1,
+                    gamma=(
+                        self.train_config["lr_scheduler_params"]["factor"]
+                        if "factor" in self.train_config["lr_scheduler_params"].keys()
+                        else 0.1
+                    ),
                     last_epoch=-1,
-                    verbose=self.train_config["lr_scheduler_params"]["verbose"]
-                    if "verbose" in self.train_config["lr_scheduler_params"].keys()
-                    else True,
+                    verbose=(
+                        self.train_config["lr_scheduler_params"]["verbose"]
+                        if "verbose" in self.train_config["lr_scheduler_params"].keys()
+                        else True
+                    ),
                 )
 
     def __load_weights(self):
