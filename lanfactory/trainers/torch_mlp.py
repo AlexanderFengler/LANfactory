@@ -414,6 +414,7 @@ class ModelTrainerTorchMLP:
         save_history=True,
         save_model=True,
         save_config=True,
+        save_onnx=True,
         save_all=True,
         save_data_details=True,
         verbose=1,
@@ -438,6 +439,8 @@ class ModelTrainerTorchMLP:
                 Whether to save the model.
             save_config (bool):
                 Whether to save the training configuration.
+            save_onnx (bool):
+                Whether to save the model to ONNX format.
             save_all (bool):
                 Whether to save all.
             save_data_details (bool):
@@ -574,6 +577,7 @@ class ModelTrainerTorchMLP:
             training_history_path = full_path + "_torch_training_history.csv"
             pd.DataFrame(training_history).to_csv(training_history_path)
             print("Saving training history to: " + training_history_path)
+            self.file_path_training_history = training_history_path
 
         if save_model or save_all:
             print("Saving model state dict")
@@ -583,11 +587,13 @@ class ModelTrainerTorchMLP:
                 train_state_path,
             )
             print("Saving model parameters to: " + train_state_path)
+            self.file_path_model = train_state_path
 
         if save_config or save_all:
             config_path = full_path + "_train_config.pickle"
             pickle.dump(self.train_config, open(config_path, "wb"))
             print("Saving training config to: " + config_path)
+            self.file_path_config = config_path
 
         if save_data_details or save_all:
             data_details_path = full_path + "_data_details.pickle"
@@ -602,6 +608,18 @@ class ModelTrainerTorchMLP:
             )
 
             print("Saving training data details to: " + data_details_path)
+            self.file_path_data_details = data_details_path
+
+        if save_onnx or save_all:
+            print("Saving model to ONNX format")
+            onnx_path = full_path + "_torch_model.onnx"
+            torch.onnx.export(
+                self.model,
+                torch.randn(1, self.model.input_shape).to(self.dev),
+                onnx_path,
+            )
+            print("Saving model to ONNX format to: " + onnx_path)
+            self.file_path_onnx = onnx_path
 
         # Upload wandb data
         if wandb_on:
