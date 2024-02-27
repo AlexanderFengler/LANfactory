@@ -189,8 +189,10 @@ class TorchMLP(nn.Module):
             self.network_type = network_type
         else:
             self.network_type = "lan" if self.train_output_type == "logprob" else "cpn"
-            print('Setting network type to "lan" or "cpn" based on train_output_type. \n' + \
-                  'Note: This is only a default setting, and can be overwritten by the network_type argument.')
+            print(
+                'Setting network type to "lan" or "cpn" based on train_output_type. \n'
+                + "Note: This is only a default setting, and can be overwritten by the network_type argument."
+            )
 
         self.activations = {
             "relu": torch.nn.ReLU(),
@@ -577,7 +579,13 @@ class ModelTrainerTorchMLP:
 
         # Saving
         full_path = (
-            output_folder + "/" + output_file_id + "_" + self.model.network_type + "_" + run_id
+            output_folder
+            + "/"
+            + output_file_id
+            + "_"
+            + self.model.network_type
+            + "_"
+            + run_id
         )
 
         if save_history or save_all:
