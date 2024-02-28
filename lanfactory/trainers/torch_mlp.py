@@ -644,6 +644,8 @@ class ModelTrainerTorchMLP:
         if save_onnx or save_all:
             print("Saving model to ONNX format")
             onnx_path = full_path + "_torch_model.onnx"
+            # Put model in eval mode
+            self.model.eval()
             torch.onnx.export(
                 self.model,
                 torch.randn(1, self.model.input_shape).to(self.dev),
