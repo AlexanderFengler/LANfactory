@@ -185,11 +185,7 @@ class MLPJax(nn.Module):
         return loaded_state
 
     def make_forward_partial(
-        self,
-        seed=42,
-        input_dim=6,
-        state=None,
-        add_jitted=False,
+        self, seed=42, input_dim=6, state=None, add_jitted=False,
     ):
         """Creates a partial function for the forward pass of the network.
 
