@@ -705,7 +705,7 @@ class LoadTorchMLPInfer:
             generative_model_id=None,
         )
         # self.net.load_state_dict(torch.load(self.model_file_path))
-        if torch.cuda.is_available() == False:
+        if not torch.cuda.is_available():
             self.net.load_state_dict(
                 torch.load(self.model_file_path, map_location=torch.device("cpu"))
             )
@@ -775,7 +775,7 @@ class LoadTorchMLP:
             generative_model_id=None,
         )
         # self.net.load_state_dict(torch.load(self.model_file_path))
-        if torch.cuda.is_available() == False:
+        if not torch.cuda.is_available():
             self.net.load_state_dict(
                 torch.load(self.model_file_path, map_location=torch.device("cpu"))
             )
