@@ -28,7 +28,7 @@ jobs:
         run: black . --check
 
       - name: Linting
-        run: ruff check . --line-length 120
+        run: ruff check . --line-length 120 --exclude notebooks/*
 
     #   - name: Run pytest
     #     run: pytest
