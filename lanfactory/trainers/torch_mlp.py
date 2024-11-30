@@ -13,7 +13,6 @@ import torch.nn.functional as F
 try:
     import wandb
 except ImportError:
-    print("passing 1")
     print("wandb not available")
 
 """This module contains the classes for training TorchMLP models."""
@@ -328,7 +327,6 @@ class ModelTrainerTorchMLP:
     def __try_wandb(
         self, wandb_project_id="projectid", file_id="fileid", run_id="runid"
     ):
-        print("passing 2")
         try:
             wandb.init(
                 project=wandb_project_id,
@@ -344,7 +342,6 @@ class ModelTrainerTorchMLP:
             )
             print("Succefully initialized wandb!")
         except Exception as e:
-            print("passing 3")
             print(e)
             print("wandb not available, not storing results there")
 
