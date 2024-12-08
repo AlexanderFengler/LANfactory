@@ -129,13 +129,10 @@ class MLPJax(nn.Module):
                     x = self.activation_funs[i](x)
 
         if (not self.train) and (self.train_output_type == "logprob"):
-            print("passing through identity")
             x = x  # just for pedagogy
         elif (not self.train) and (self.train_output_type == "logits"):
-            print("passing through transform")
             x = -jnp.log((1 + jnp.exp(-x)))
         elif not self.train:
-            print("passing through identity 2")
             x = x  # just for pedagogy
 
         return x
